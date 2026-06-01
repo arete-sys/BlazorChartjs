@@ -112,13 +112,18 @@ Everything **not** listed here is **parity by default** — same type names, pro
 
 ## 9. Proposed architecture
 
-### 9.1 Solution / folder tree  *(repo-root layout — DECIDED)*
-The new `BCJS` solution lives at the **repo root**. The original library is moved into `reference/`
-(read-only, build-excluded) so it remains available for parity comparison without participating in the build.
+### 9.1 Solution / folder tree  *(flat repo-root layout — DECIDED)*
+The new `BCJS` solution lives at the **repo root** with projects directly at the top level (no
+`src/`/`samples/`/`tests/` wrappers). The original library is moved into `reference/` (read-only,
+build-excluded) so it remains available for parity comparison without participating in the build.
+
+The RCL **project folder/file is `BCJS.RCL`**, but its **identity is `BCJS`**
+(`AssemblyName` = `BCJS`, `PackageId` = `BCJS`, `RootNamespace` = `BCJS`) — so the shipped DLL,
+package, and namespaces are all `BCJS`; only the project file on disk is `BCJS.RCL.csproj`.
 
 ```
 BlazorChartjs/                       (repo root)
-├── BCJS.sln
+├── BCJS.slnx
 ├── Directory.Build.props            (net10.0, nullable, LangVersion=latest, implicit usings, analyzers, pkg metadata)
 ├── .editorconfig
 ├── README.md
@@ -127,28 +132,25 @@ BlazorChartjs/                       (repo root)
 ├── THIRD-PARTY-NOTICES.md           (Chart.js MIT + any plugins)
 ├── docs/
 │   └── PARITY-AND-ARCHITECTURE.md   (this file)
-├── reference/                       (the ORIGINAL, moved here; excluded from BCJS.sln & build)
+├── reference/                       (the ORIGINAL, moved here; excluded from BCJS.slnx & build, gitignored)
 │   ├── src/                         (was ./src — PSC.Blazor.Components.Chartjs)
 │   └── ChartjsDemo/
-├── src/
-│   └── BCJS/                        (Razor Class Library — the package)
-│       ├── BCJS.csproj             (Microsoft.NET.Sdk.Razor; AssemblyName/PackageId/RootNamespace = BCJS)
-│       ├── Components/             Chart.razor (+ .razor.cs, .razor.css)
-│       ├── Interop/                ChartInterop.cs (IAsyncDisposable), DotNet callback hub
-│       ├── Configuration/          IChartConfig, Options, Data, Dataset, Plugins, Scales, Axis, Ticks, …
-│       │   ├── Charts/             BarChartConfig, LineChartConfig, … (the 8 entry points + their Data/Dataset)
-│       │   ├── Plugins/            Legend, Tooltip, Title, DataLabels, Zoom/*, Crosshair, Autocolors
-│       │   ├── Animations/         Animation, Animations, Tension
-│       │   ├── Callbacks/          Callbacks, CallbackGenericContext, TicksCallbackContext, contexts
-│       │   └── Enums/              ChartType, Axes, TimeUnit, ZoomMode + string-enums (+ converters)
-│       ├── Serialization/          BcjsJsonContext (JsonSerializerContext), converters, naming policy
-│       └── wwwroot/
-│           ├── chart-interop.js    (the single collocated ES module)
-│           └── lib/chartjs/        Chart.js 4.5.1 dist (incl. auto/auto.js) + any pinned plugins (MIT)
-├── samples/
-│   └── BCJS.Sample/                (Blazor WASM, net10) — line, bar, pie/doughnut, radar, mixed + update/destroy
-└── tests/
-    └── BCJS.Tests/                 (xUnit + bUnit) — serialization assertions + component lifecycle
+├── BCJS.RCL/                        (Razor Class Library — the package; identity = BCJS)
+│   ├── BCJS.RCL.csproj             (Microsoft.NET.Sdk.Razor; AssemblyName/PackageId/RootNamespace = BCJS)
+│   ├── Components/                 Chart.razor (+ .razor.cs, .razor.css)
+│   ├── Interop/                    ChartInterop.cs (IAsyncDisposable), DotNet callback hub
+│   ├── Configuration/             IChartConfig, Options, Data, Dataset, Plugins, Scales, Axis, Ticks, …
+│   │   ├── Charts/                BarChartConfig, LineChartConfig, … (the 8 entry points + their Data/Dataset)
+│   │   ├── Plugins/               Legend, Tooltip, Title, DataLabels, Zoom/*, Crosshair, Autocolors
+│   │   ├── Animations/            Animation, Animations, Tension
+│   │   ├── Callbacks/             Callbacks, CallbackGenericContext, TicksCallbackContext, contexts
+│   │   └── Enums/                 ChartType, Axes, TimeUnit, ZoomMode + string-enums (+ converters)
+│   ├── Serialization/             BcjsJsonContext (JsonSerializerContext), converters, naming policy
+│   └── wwwroot/
+│       ├── chart-interop.js       (the single collocated ES module)
+│       └── lib/chartjs/           Chart.js 4.5.1 dist (incl. auto/auto.js) + any pinned plugins (MIT)
+├── BCJS.Sample/                    (Blazor WASM, net10) — line, bar, pie/doughnut, radar, mixed + update/destroy
+└── BCJS.Tests/                     (xUnit + bUnit) — serialization assertions + component lifecycle
 ```
 
 ### 9.2 Namespace map (root `BCJS`)

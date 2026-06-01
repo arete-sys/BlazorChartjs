@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <!-- Shipped identity is BCJS regardless of the on-disk project name. -->
+    <AssemblyName>BCJS</AssemblyName>
+    <RootNamespace>BCJS</RootNamespace>
+    <PackageId>BCJS</PackageId>
+
+    <IsPackable>true</IsPackable>
+    <Version>1.0.0</Version>
+    <Title>BCJS — Chart.js components for Blazor</Title>
+    <Description>Modern Blazor component library for Chart.js 4.5.1. A clean net10.0 rewrite of PSC.Blazor.Components.Chartjs with isolated JS interop and source-generated serialization.</Description>
+    <PackageTags>chartjs;blazor;charts;net10;wasm;blazor-server;blazor-component</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.8" />
+  </ItemGroup>
+
+  <!-- Packaging assets (README added in Phase E; LICENSE lives at repo root). -->
+  <ItemGroup>
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+</Project>
