@@ -1,2 +1,5 @@
 *.razor linguist-language=C#
 *.cs linguist-language=C#
+
+# Vendored Chart.js: store byte-for-byte, no EOL normalization, exclude from language stats.
+BCJS.RCL/wwwroot/lib/chartjs/** linguist-vendored -text
