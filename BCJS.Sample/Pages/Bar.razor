@@ -1,0 +1,61 @@
+@page "/bar"
+
+<PageTitle>Bar — BCJS</PageTitle>
+<h1>Bar chart</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="AddDatasetAsync">Add dataset</button>
+    <button class="btn btn-secondary me-2" @onclick="ClearAsync">Clear</button>
+    <button class="btn btn-danger" @onclick="() => _show = !_show">@(_show ? "Destroy" : "Recreate")</button>
+</div>
+
+@if (_show)
+{
+    <div style="height:400px">
+        <Chart @ref="_chart" Config="_config" Height="400px" />
+    </div>
+}
+
+@code {
+    private readonly BarChartConfig _config = new();
+    private Chart? _chart;
+    private bool _show = true;
+    private int _added;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = ["Q1", "Q2", "Q3", "Q4"];
+        _config.Data.Datasets.Add(new BarDataset
+        {
+            Label = "Revenue",
+            Data = [120, 190, 130, 170],
+            BackgroundColor = [SampleColors.PaletteFill[1]],
+            BorderColor = [SampleColors.Palette[1]],
+            BorderWidth = 1,
+        });
+        _config.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Scales = new Dictionary<string, Axis> { [Scales.YAxisId] = new Axis { BeginAtZero = true } },
+        };
+    }
+
+    private async Task AddDatasetAsync()
+    {
+        if (_chart is null) return;
+        _added++;
+        await _chart.AddDatasetAsync(new BarDataset
+        {
+            Label = $"Series {_added}",
+            Data = [Random.Shared.Next(50, 200), Random.Shared.Next(50, 200), Random.Shared.Next(50, 200), Random.Shared.Next(50, 200)],
+            BackgroundColor = [SampleColors.PaletteFill[(_added + 1) % SampleColors.PaletteFill.Length]],
+        });
+    }
+
+    private async Task ClearAsync()
+    {
+        if (_chart is not null)
+            await _chart.ClearDataAsync();
+    }
+}

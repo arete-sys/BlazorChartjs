@@ -1,0 +1,41 @@
+@page "/pie-doughnut"
+
+<PageTitle>Pie & Doughnut — BCJS</PageTitle>
+<h1>Pie &amp; Doughnut</h1>
+
+<button class="btn btn-danger mb-3" @onclick="() => _show = !_show">@(_show ? "Destroy" : "Recreate")</button>
+
+@if (_show)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Pie</h4>
+            <div style="height:320px"><Chart Config="_pie" Height="320px" /></div>
+        </div>
+        <div class="col-md-6">
+            <h4>Doughnut</h4>
+            <div style="height:320px"><Chart Config="_doughnut" Height="320px" /></div>
+        </div>
+    </div>
+}
+
+@code {
+    private readonly PieChartConfig _pie = new();
+    private readonly DoughnutChartConfig _doughnut = new();
+    private bool _show = true;
+
+    protected override void OnInitialized()
+    {
+        string[] labels = ["Red", "Blue", "Yellow", "Green"];
+        List<decimal?> data = [30, 20, 25, 25];
+        var colors = SampleColors.PaletteFill.Take(4).ToList();
+
+        _pie.Data.Labels = [.. labels];
+        _pie.Data.Datasets.Add(new PieDataset { Label = "Share", Data = data, BackgroundColor = colors });
+        _pie.Options = new PieOptions { Responsive = true, MaintainAspectRatio = false };
+
+        _doughnut.Data.Labels = [.. labels];
+        _doughnut.Data.Datasets.Add(new DoughnutDataset { Label = "Share", Data = [.. data], BackgroundColor = colors, HoverOffset = 8 });
+        _doughnut.Options = new Options { Responsive = true, MaintainAspectRatio = false };
+    }
+}

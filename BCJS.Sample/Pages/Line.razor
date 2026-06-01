@@ -1,0 +1,72 @@
+@page "/line"
+
+<PageTitle>Line — BCJS</PageTitle>
+<h1>Line chart</h1>
+
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="AddPointAsync">Add data point</button>
+    <button class="btn btn-secondary me-2" @onclick="RecolorAsync">Update (recolor)</button>
+    <button class="btn btn-danger" @onclick="ToggleAsync">@(_show ? "Destroy" : "Recreate")</button>
+</div>
+
+@if (_show)
+{
+    <div style="height:400px">
+        <Chart @ref="_chart" Config="_config" Height="400px" />
+    </div>
+}
+
+@code {
+    private readonly LineChartConfig _config = new();
+    private Chart? _chart;
+    private bool _show = true;
+    private int _next = 5;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = ["Jan", "Feb", "Mar", "Apr"];
+        _config.Data.Datasets.Add(new LineDataset
+        {
+            Label = "Sales",
+            BorderColor = SampleColors.Palette[1],
+            BackgroundColor = SampleColors.PaletteFill[1],
+            Data = [12, 19, 3, 5],
+            Tension = 0.3M,
+            Fill = true,
+        });
+        _config.Data.Datasets.Add(new LineDataset
+        {
+            Label = "Costs",
+            BorderColor = SampleColors.Palette[0],
+            Data = [7, 11, 5, 8],
+            Tension = 0.3M,
+        });
+        _config.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins { Legend = new Legend { Position = LegendPosition.Bottom } },
+        };
+    }
+
+    private async Task AddPointAsync()
+    {
+        if (_chart is null) return;
+        await _chart.AddDataAsync([$"M{_next}"], 0, [Random.Shared.Next(1, 20)]);
+        await _chart.AddDataAsync([null], 1, [Random.Shared.Next(1, 20)]);
+        _next++;
+    }
+
+    private async Task RecolorAsync()
+    {
+        if (_chart is null) return;
+        _config.Data.Datasets[0].BorderColor = SampleColors.Palette[Random.Shared.Next(SampleColors.Palette.Length)];
+        await _chart.UpdateAsync();
+    }
+
+    private async Task ToggleAsync()
+    {
+        _show = !_show;
+        await Task.CompletedTask;
+    }
+}

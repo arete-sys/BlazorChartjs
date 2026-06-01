@@ -1,0 +1,47 @@
+@page "/mixed"
+
+<PageTitle>Mixed — BCJS</PageTitle>
+<h1>Mixed bar + line</h1>
+
+<p>A bar configuration with one dataset overridden to <code>type: "line"</code>.</p>
+
+<button class="btn btn-danger mb-3" @onclick="() => _show = !_show">@(_show ? "Destroy" : "Recreate")</button>
+
+@if (_show)
+{
+    <div style="height:400px"><Chart Config="_config" Height="400px" /></div>
+}
+
+@code {
+    private readonly BarChartConfig _config = new();
+    private bool _show = true;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = ["Jan", "Feb", "Mar", "Apr", "May"];
+        _config.Data.Datasets.Add(new BarDataset
+        {
+            Label = "Units (bar)",
+            Data = [40, 55, 35, 60, 50],
+            BackgroundColor = [SampleColors.PaletteFill[2]],
+            BorderColor = [SampleColors.Palette[2]],
+            BorderWidth = 1,
+        });
+        // A mixed chart keeps a single dataset type and overrides Type per dataset (parity pattern).
+        _config.Data.Datasets.Add(new BarDataset
+        {
+            Type = ChartType.Line,
+            Label = "Trend (line)",
+            Data = [44, 50, 42, 58, 53],
+            BorderColor = [SampleColors.Palette[3]],
+            BackgroundColor = [SampleColors.PaletteFill[3]],
+            Fill = false,
+        });
+        _config.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Scales = new Dictionary<string, Axis> { [Scales.YAxisId] = new Axis { BeginAtZero = true } },
+        };
+    }
+}

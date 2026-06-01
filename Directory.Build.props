@@ -11,7 +11,6 @@
          IDExxxx code-style rules to the editor rather than failing the build. -->
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <!-- Common package identity / metadata (the RCL opts in via IsPackable). -->

@@ -1,0 +1,43 @@
+@page "/radar"
+
+<PageTitle>Radar — BCJS</PageTitle>
+<h1>Radar chart</h1>
+
+<button class="btn btn-danger mb-3" @onclick="() => _show = !_show">@(_show ? "Destroy" : "Recreate")</button>
+
+@if (_show)
+{
+    <div style="height:420px"><Chart Config="_config" Height="420px" /></div>
+}
+
+@code {
+    private readonly RadarChartConfig _config = new();
+    private bool _show = true;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = ["Speed", "Power", "Range", "Agility", "Defense", "Cost"];
+        _config.Data.Datasets.Add(new RadarDataset
+        {
+            Label = "Model A",
+            Data = [65, 59, 90, 81, 56, 55],
+            BackgroundColor = SampleColors.PaletteFill[1],
+            BorderColor = SampleColors.Palette[1],
+            Fill = true,
+        });
+        _config.Data.Datasets.Add(new RadarDataset
+        {
+            Label = "Model B",
+            Data = [28, 48, 40, 19, 96, 27],
+            BackgroundColor = SampleColors.PaletteFill[0],
+            BorderColor = SampleColors.Palette[0],
+            Fill = true,
+        });
+        _config.Options = new RadarOptions
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Scales = new RadarOptionsScales { R = new RadarOptionsScalesRadius { BeginAtZero = true, Max = 100 } },
+        };
+    }
+}
