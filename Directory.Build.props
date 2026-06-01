@@ -7,7 +7,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Enforce correctness (compiler + CA analyzers) as build errors, but leave opinionated
+         IDExxxx code-style rules to the editor rather than failing the build. -->
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
