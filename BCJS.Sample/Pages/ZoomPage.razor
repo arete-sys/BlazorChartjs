@@ -1,0 +1,58 @@
+@page "/zoom"
+
+<PageTitle>Zoom — BCJS</PageTitle>
+<h1>Zoom &amp; pan</h1>
+
+<p>Mouse wheel to zoom, click-drag to zoom a region, drag to pan. (Touch pinch needs Hammer.)</p>
+
+<button class="btn btn-danger mb-3" @onclick="() => _show = !_show">@(_show ? "Destroy" : "Recreate")</button>
+
+@if (_show)
+{
+    <div style="height:420px"><Chart Config="_config" Height="420px" /></div>
+}
+
+@code {
+    private readonly LineChartConfig _config = new();
+    private bool _show = true;
+
+    protected override void OnInitialized()
+    {
+        var labels = new List<string>();
+        var data = new List<decimal?>();
+        for (var i = 0; i < 60; i++)
+        {
+            labels.Add($"P{i}");
+            data.Add((decimal)(Math.Sin(i / 4.0) * 20 + 50));
+        }
+
+        _config.Data.Labels = labels;
+        _config.Data.Datasets.Add(new LineDataset
+        {
+            Label = "Signal",
+            Data = data,
+            BorderColor = SampleColors.Palette[4],
+            PointRadius = 0,
+            Tension = 0.3M,
+        });
+        _config.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins
+            {
+                Zoom = new Zoom
+                {
+                    Mode = ZoomMode.XY,
+                    Pan = new Pan { Enabled = true, Mode = ZoomMode.XY },
+                    ZoomOptions = new ZoomOptions
+                    {
+                        Wheel = new Wheel { Enabled = true },
+                        Drag = new Drag { Enabled = true },
+                        Pinch = new Pinch { Enabled = true },
+                    },
+                },
+            },
+        };
+    }
+}

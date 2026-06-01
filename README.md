@@ -103,12 +103,14 @@ _config.Options = new Options
 
 > Synchronous JS→.NET callbacks (tooltip/tick/legend-filter) require Blazor **WebAssembly**.
 
-## Status / not yet ported
+## Plugins
 
-The core (all chart types, mixed, callbacks, crosshair, grouped axes, animations) is implemented.
-The external **data-labels** and **zoom** plugins are modelled in the option API but not yet vendored;
-data-labels is registered only if a `ChartDataLabels` global is present. These are tracked for a
-follow-up and do not affect the core charts.
+All chart types, mixed charts, callbacks, crosshair, grouped axes, and animations are implemented.
+The **zoom** and **data-labels** plugins are vendored as isolated ES modules and loaded on demand:
+
+- **Data labels** — set `Options.RegisterDataLabels = true` and configure `Plugins.DataLabels`.
+- **Zoom / pan** — configure `Options.Plugins.Zoom`. Wheel and drag zoom work out of the box; touch
+  pinch/pan needs a real Hammer build (BCJS ships a no-op stub to keep the module isolated).
 
 ## License
 

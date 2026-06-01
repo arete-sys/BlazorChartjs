@@ -21,6 +21,8 @@ modernizing the runtime, serialization, and JS interop. See [`MIGRATION.md`](MIG
   `OnChartOver` / `OnLegendClick` events, and `AddDataAsync` / `AddDatasetAsync` / `ClearDataAsync` /
   `UpdateAsync` methods.
 - Crosshair plugin and grouped secondary axes ported into the interop module.
+- **zoom** and **data-labels** plugins vendored as isolated ES modules, loaded on demand (zoom's
+  Hammer dependency is stubbed; wheel/drag zoom work, touch gestures need a real Hammer build).
 - `BCJS.Sample` (Blazor WebAssembly) demonstrating line, bar, pie/doughnut, radar, and mixed charts
   with add-data, update, and destroy.
 - `BCJS.Tests` (xUnit serialization + bUnit component lifecycle).
@@ -34,5 +36,3 @@ modernizing the runtime, serialization, and JS interop. See [`MIGRATION.md`](MIG
 - The config is serialized and `JSON.parse`d — the original's `eval` is gone.
 - A few property names were corrected to C# casing (`Parsing.XAxisKey`, `DataLabels.TextShadowBlur`).
 
-### Not yet ported
-- External **zoom** and **data-labels** plugins are modelled but not yet vendored as isolated modules.

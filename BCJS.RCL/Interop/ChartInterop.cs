@@ -9,7 +9,9 @@ namespace BCJS.Interop;
 /// </summary>
 public sealed class ChartInterop : IAsyncDisposable
 {
-    private const string ModulePath = "./_content/BCJS/chart-interop.js";
+    // A version query keeps this out of the net10 fingerprint import map (which would rewrite the URL
+    // to a fingerprinted name the host may not serve) while still busting the cache on version bumps.
+    private const string ModulePath = "./_content/BCJS/chart-interop.js?v=1.0.0";
     private readonly Lazy<Task<IJSObjectReference>> _module;
 
     /// <summary>Initializes a new instance of the <see cref="ChartInterop"/> class.</summary>

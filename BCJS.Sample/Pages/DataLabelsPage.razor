@@ -1,0 +1,49 @@
+@page "/datalabels"
+
+<PageTitle>Data labels — BCJS</PageTitle>
+<h1>Data labels</h1>
+
+<p>Values drawn on top of each bar via the data-labels plugin (loaded only when requested).</p>
+
+<button class="btn btn-danger mb-3" @onclick="() => _show = !_show">@(_show ? "Destroy" : "Recreate")</button>
+
+@if (_show)
+{
+    <div style="height:400px"><Chart Config="_config" Height="400px" /></div>
+}
+
+@code {
+    private readonly BarChartConfig _config = new();
+    private bool _show = true;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        _config.Data.Datasets.Add(new BarDataset
+        {
+            Label = "Visitors",
+            Data = [120, 200, 150, 240, 180],
+            BackgroundColor = [SampleColors.PaletteFill[3]],
+            BorderColor = [SampleColors.Palette[3]],
+            BorderWidth = 1,
+        });
+        _config.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            RegisterDataLabels = true,
+            Plugins = new Plugins
+            {
+                Legend = new Legend { Display = false },
+                DataLabels = new DataLabels
+                {
+                    Anchor = DatalabelsAnchor.End,
+                    Align = DatalabelsAlign.Top,
+                    Color = "#333",
+                    Font = new Font { Weight = "bold" },
+                },
+            },
+            Scales = new Dictionary<string, Axis> { [Scales.YAxisId] = new Axis { BeginAtZero = true } },
+        };
+    }
+}
