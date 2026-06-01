@@ -1,0 +1,9 @@
+@namespace BCJS
+@inject IJSRuntime JSRuntime
+
+<div id="bcjs-container-@Config?.CanvasId"
+     class="bcjs-chart-container @Class"
+     style="height:@Height; width:@Width; @Style"
+     @onmouseout="OnMouseOutAsync">
+    <canvas id="@Config?.CanvasId"></canvas>
+</div>
