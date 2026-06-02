@@ -1,6 +1,17 @@
 # BCJS — session handoff (resume here)
 
-_Last updated: 2026-06-01, end of session. Branch: `bcjs-rewrite` (not merged to `master`, not pushed)._
+_Last updated: 2026-06-02. Branch: `bcjs-rewrite` (not merged to `master`, not pushed)._
+
+> **2026-06-02 — visual verification CONFIRMED.** Against a guaranteed-fresh single
+> `dotnet run` server (no orphaned processes, no stale builds), the Puppeteer harness
+> rendered all 7 routes with `paintedPixels > 0` on every canvas and **zero console/page
+> errors**: line 174 823, bar 207 549, pie+doughnut 68 681/53 331, radar 46 887, mixed
+> 219 831, zoom 33 526, datalabels 205 695. Screenshots in `artifacts-shots/` were
+> eyeballed: line (2 datasets, fill, points), datalabels (plugin draws values atop each
+> bar), zoom (clean sine, zoom plugin loaded, no `hammerjs` crash). The current setup
+> (single bundle + `?v=1.0.0` import-map bypass) works in dev. The open issue below is
+> **resolved** — the root cause was the orphaned-process / stale-build confusion, not a
+> fundamental fingerprint/import-map defect.
 
 ## Where things stand
 
@@ -10,8 +21,8 @@ _Last updated: 2026-06-01, end of session. Branch: `bcjs-rewrite` (not merged to
 - `dotnet test BCJS.slnx -c Release` → **15/15 green** (serialization + bUnit lifecycle).
 - `dotnet pack BCJS.RCL` → `BCJS.1.0.0.nupkg` (net10 lib + static assets + README/LICENSE, id `BCJS`).
 
-This session added the **zoom + data-labels plugins** and attempted **browser visual verification**.
-The verification is **not yet confirmed** — see the open issue below.
+A prior session added the **zoom + data-labels plugins** and attempted browser visual verification;
+**that verification is now confirmed** (see the dated note above).
 
 ## What changed this session (committed as WIP)
 
@@ -37,7 +48,10 @@ The verification is **not yet confirmed** — see the open issue below.
    (Pages are named `*Page` so the class names don't shadow the `Zoom`/`DataLabels` config types.)
 6. Docs (README/CHANGELOG/THIRD-PARTY-NOTICES) updated; plugins are now "implemented", not "not yet ported".
 
-## ⚠️ Open issue — visual verification not confirmed
+## ✅ Resolved — visual verification confirmed (2026-06-02)
+
+_The text below is kept for the historical chase; the rendering is confirmed working — see the dated note at the top._
+
 
 We could not get a clean browser screenshot of the charts rendering. The chase went deep into net10
 **static-asset fingerprinting + import map**, where fingerprinted RCL `_content` URLs 404 under
