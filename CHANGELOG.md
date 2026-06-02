@@ -3,6 +3,13 @@
 All notable changes to BCJS are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `AddBcjs()` service-collection extension that registers a single scoped `ChartInterop` shared by all
+  charts. **Optional and non-breaking** — the `<Chart>` component still works without it (it creates
+  and owns its own interop when none is registered).
+
 ## [1.0.0] — 2026-06-02
 
 The first release of **BCJS**, a ground-up rewrite of the Blazor Chart.js wrapper originally published

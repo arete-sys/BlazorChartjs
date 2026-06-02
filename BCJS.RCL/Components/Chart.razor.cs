@@ -2,6 +2,7 @@ using BCJS.Interop;
 using BCJS.Serialization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 
 namespace BCJS;
@@ -14,6 +15,7 @@ namespace BCJS;
 public partial class Chart : IAsyncDisposable
 {
     private ChartInterop? _interop;
+    private bool _ownsInterop;
     private DotNetObjectReference<Chart>? _selfRef;
     private IChartConfig? _renderedConfig;
 
@@ -56,7 +58,18 @@ public partial class Chart : IAsyncDisposable
         if (Config is null)
             return;
 
-        _interop ??= new ChartInterop(JSRuntime);
+        if (_interop is null)
+        {
+            // Prefer a shared interop registered via AddBcjs(); otherwise create (and own) our own,
+            // so the component still works with zero DI configuration.
+            _interop = Services.GetService<ChartInterop>();
+            if (_interop is null)
+            {
+                _interop = new ChartInterop(JSRuntime);
+                _ownsInterop = true;
+            }
+        }
+
         _selfRef ??= DotNetObjectReference.Create(this);
 
         if (ReferenceEquals(Config, _renderedConfig))
@@ -212,8 +225,14 @@ public partial class Chart : IAsyncDisposable
             {
                 // Circuit gone; nothing to release on the JS side.
             }
+            catch (ObjectDisposedException)
+            {
+                // A shared (DI-owned) interop may be disposed before this component during teardown.
+            }
 
-            await _interop.DisposeAsync();
+            // Only dispose the interop module if we created it; a shared one is owned by DI.
+            if (_ownsInterop)
+                await _interop.DisposeAsync();
         }
 
         _selfRef?.Dispose();

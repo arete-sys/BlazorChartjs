@@ -20,13 +20,20 @@ generators**, and releases the underlying chart via `IAsyncDisposable`.
 
 ## Install
 
-Reference the project (or the `BCJS` package once published) from your Blazor app:
-
-```xml
-<ProjectReference Include="..\BCJS.RCL\BCJS.RCL.csproj" />
+```bash
+dotnet add package BCJS
 ```
 
 No script tags are required — the component imports its own JS module on first render.
+
+### Setup (optional)
+
+The `<Chart>` component works with no registration. Optionally call `AddBcjs()` in `Program.cs` so all
+charts share a single JS-interop module reference instead of one per chart:
+
+```csharp
+builder.Services.AddBcjs();
+```
 
 ## Quick start
 
