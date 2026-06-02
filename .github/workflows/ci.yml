@@ -1,0 +1,56 @@
+name: CI
+
+# Build + test on every push/PR to the default branch. Releases are handled separately by release.yml
+# (triggered by version tags), so this does not run on tags.
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast gate: compile the library + run the deterministic unit/serialization tests (no browser).
+  unit:
+    name: Build & unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Build & test (library + unit tests)
+        run: dotnet test BCJS.Tests/BCJS.Tests.csproj -c Release
+
+  # Heavier gate: full solution compile + the Playwright real-browser rendering tests.
+  visual:
+    name: Visual (Playwright) tests
+    runs-on: ubuntu-latest   # google-chrome-stable is preinstalled; the tests launch it via Channel="chrome"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      # Defensive: ensures the Blazor WebAssembly sample builds/runs on a clean runner.
+      - name: Install wasm-tools workload
+        run: dotnet workload install wasm-tools
+      # Full compile gate for every project (RCL, Sample, Tests, VisualTests).
+      - name: Build solution
+        run: dotnet build BCJS.slnx -c Release
+      # The fixture starts the sample server and drives Chrome across all chart routes.
+      - name: Visual tests
+        run: dotnet test BCJS.VisualTests/BCJS.VisualTests.csproj -c Release --no-build
+      # Keep the rendered screenshots for inspection, even when the run fails.
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-screenshots
+          path: artifacts-shots/
+          if-no-files-found: ignore
