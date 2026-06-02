@@ -18,12 +18,16 @@
     <Authors>Arete</Authors>
     <Company>Arete</Company>
     <Product>BCJS</Product>
-    <Copyright>Copyright © Arete. Derivative of PSC.Blazor.Components.Chartjs (Enrico Rossini).</Copyright>
-    <RepositoryUrl>https://github.com/erossini/BlazorChartjs</RepositoryUrl>
+    <Copyright>Copyright © Arete. Derivative of PSC.Blazor.Components.Chartjs (© Enrico Rossini), used under the MIT License.</Copyright>
+    <PackageProjectUrl>https://github.com/arete-sys/BlazorChartjs</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/arete-sys/BlazorChartjs</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+    <!-- Set automatically on CI runners (GitHub Actions sets CI=true) for reproducible builds. -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <!-- Off by default; only the packable RCL turns these on. -->
     <IsPackable>false</IsPackable>
   </PropertyGroup>

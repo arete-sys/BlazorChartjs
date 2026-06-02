@@ -8,7 +8,22 @@
 
     <IsPackable>true</IsPackable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <Version>1.0.0</Version>
+
+    <!-- Fallback only. The real release version is supplied at pack time via -p:Version=X.Y.Z
+         (the CI workflow or publish script) — the csproj is NOT the source of truth. This value also
+         feeds the runtime cache-busting query in ChartInterop (assembly version → "?v="), so a release
+         build MUST pass -p:Version to the *build* step so the embedded version matches the package. -->
+    <Version>0.0.0</Version>
+
+    <!-- Symbols package (snupkg) for source debugging via nuget.org's symbol server. -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <!-- Strong naming. key/BCJS.snk is committed (an OSS strong-name key is not a secret) and is
+         PERMANENT: once a strong-named version is published, this key must never change. -->
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\key\BCJS.snk</AssemblyOriginatorKeyFile>
+
     <Title>BCJS — Chart.js components for Blazor</Title>
     <Description>Modern Blazor component library for Chart.js 4.5.1. A clean net10.0 rewrite of PSC.Blazor.Components.Chartjs with isolated JS interop and source-generated serialization.</Description>
     <PackageTags>chartjs;blazor;charts;net10;wasm;blazor-server;blazor-component</PackageTags>
@@ -21,12 +36,15 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.8" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
-  <!-- Packaging assets (LICENSE + README live at the repo root). -->
+  <!-- Packaging assets (LICENSE/README/notices live at the repo root). LICENSE ships in the package to
+       carry the MIT copyright notice required for this derivative work. -->
   <ItemGroup>
     <None Include="..\LICENSE" Pack="true" PackagePath="\" Visible="false" />
     <None Include="..\README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
 </Project>

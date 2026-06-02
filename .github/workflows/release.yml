@@ -1,0 +1,75 @@
+name: Release (NuGet)
+
+# Publishes the BCJS package to nuget.org.
+# Trigger either way:
+#   - push a tag like v1.2.3   (version = tag without the leading "v")
+#   - Actions tab -> "Run workflow" and type a version (workflow_dispatch)
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, e.g. 1.2.3 (only for manual runs; tag runs derive it from the tag).'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Gate publishing behind an environment so it can require approval / restrict who can run it.
+    # Create it under Settings -> Environments -> "nuget-release" and add the protection rules you want.
+    environment: nuget-release
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0          # full history so SourceLink can resolve commits
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"      # the tag, e.g. v1.2.3
+          fi
+          VERSION="${VERSION#v}"              # strip a leading "v" -> 1.2.3
+          if [ -z "$VERSION" ]; then
+            echo "::error::No version could be resolved. Push a vX.Y.Z tag or supply the 'version' input."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version: $VERSION"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # The publish pipeline is intentionally scoped to the library + its unit tests.
+      # Building the Blazor WASM sample and running the Playwright "Visual" tests needs a browser and
+      # is left to a separate CI workflow. Version is passed to BUILD (not only pack) so the version
+      # embedded in BCJS.dll — which drives the runtime cache-busting "?v=" query — matches the package.
+      - name: Build (library + unit tests)
+        run: dotnet build BCJS.Tests/BCJS.Tests.csproj -c Release -p:Version=${{ steps.ver.outputs.version }}
+
+      - name: Test
+        run: dotnet test BCJS.Tests/BCJS.Tests.csproj -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack BCJS.RCL/BCJS.RCL.csproj -c Release --no-build -p:Version=${{ steps.ver.outputs.version }} -o ./artifacts
+
+      - name: Push to nuget.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: >
+          dotnet nuget push "./artifacts/*.nupkg"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
