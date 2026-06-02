@@ -369,6 +369,9 @@ FodyWeavers.xsd
 # parity reference for the BCJS rewrite; intentionally untracked.
 /reference/
 
-# Local verification scratch (screenshots, publish output) — not source.
+# Local verification scratch (screenshots, publish output, browser harness) — not source.
 /artifacts-shots/
 /.pub/
+/artifacts-pub/
+/artifacts-pub2/
+/visual-test/
