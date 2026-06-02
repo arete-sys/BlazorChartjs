@@ -2,6 +2,8 @@
 
 _Last updated: 2026-06-02. Branch: `bcjs-rewrite` (not merged to `master`, not pushed)._
 
+_Decision/rationale history (why things are the way they are): [DECISIONS.md](DECISIONS.md)._
+
 > **2026-06-02 — visual verification CONFIRMED.** Against a guaranteed-fresh single
 > `dotnet run` server (no orphaned processes, no stale builds), the Puppeteer harness
 > rendered all 7 routes with `paintedPixels > 0` on every canvas and **zero console/page
