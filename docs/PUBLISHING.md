@@ -72,8 +72,9 @@ Or use the wrapper scripts (pack + push in one step):
 - **Strong naming:** the assembly is strong-named with `key/BCJS.snk` (committed; an OSS strong-name key
   is not a secret). This key is **permanent** — once a strong-named version is published it must never
   change.
-- **SourceLink:** building with a GitHub `origin` remote present embeds source links (and `snupkg`
-  enables source debugging via nuget.org's symbol server). Local builds without a remote just emit an
-  empty-source-link warning, which is harmless.
+- **SourceLink:** packs embed working source links from the GitHub `origin` remote, and `snupkg` enables
+  source debugging via nuget.org's symbol server. CI uses the plain `github.com` remote; for local clones
+  that use a custom SSH host alias (e.g. `github.com-Arete`), the RCL maps that alias to GitHub via
+  `SourceLinkGitHubHost`, so local packs resolve source links too.
 - **Prerelease:** versions like `1.2.3-beta1` publish fine. Note the assembly version drops the suffix
   (`1.2.3.0`), so two prereleases of the same base version share a cache-busting `?v=` — harmless.

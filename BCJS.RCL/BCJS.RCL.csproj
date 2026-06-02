@@ -39,6 +39,13 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- Local clones may use a custom SSH host alias (e.g. "github.com-Arete" for multi-account auth).
+       Tell SourceLink that alias is GitHub so source links resolve when packing locally. (CI uses the
+       plain github.com remote, where this is a harmless no-op.) -->
+  <ItemGroup>
+    <SourceLinkGitHubHost Include="github.com-Arete" ContentUrl="https://raw.githubusercontent.com" />
+  </ItemGroup>
+
   <!-- Packaging assets (LICENSE/README/notices live at the repo root). LICENSE ships in the package to
        carry the MIT copyright notice required for this derivative work. -->
   <ItemGroup>
