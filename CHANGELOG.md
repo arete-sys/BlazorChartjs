@@ -3,7 +3,7 @@
 All notable changes to BCJS are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.1.0] — 2026-06-02
 
 ### Added
 - `AddBcjs()` service-collection extension that registers a single scoped `ChartInterop` shared by all
