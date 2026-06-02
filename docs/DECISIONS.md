@@ -50,7 +50,7 @@ npx esbuild BCJS.RCL/js/chart-interop.src.js --bundle --format=esm --platform=br
 ### 1.3 Fingerprinting: it DOES work in published WASM — it is just off by default for RCL JS
 
 An earlier comment claimed RCL `_content` assets "are not fingerprinted in published output," full
-stop. **That was wrong** and was corrected (`0410dde`).
+stop. **That was wrong** and was corrected (`b35dae9`).
 
 **What we verified empirically (2026-06-02):**
 - **Default config:** on `dotnet publish`, the file stays `chart-interop.js` (plain name), there is **no
@@ -115,7 +115,7 @@ does **not** handle **cross-version cache invalidation** for a hardcoded `import
 (so it still resolves to the plain file), and busts the cache on version changes across dev,
 server-hosted, and dumb-static-host deployments alike.
 
-### 1.7 Decision: derive the `?v=` value from the assembly version (`33088d5`)
+### 1.7 Decision: derive the `?v=` value from the assembly version (`1750177`)
 
 The query was originally hardcoded `?v=1.0.0`, so it only advanced if someone remembered to edit it each
 release — a wart. **Decision:** derive it from `typeof(ChartInterop).Assembly.GetName().Version` so it
@@ -145,7 +145,7 @@ Repeated background `dotnet run` restarts left **orphaned processes bound to por
 builds**, so the browser loaded an import map and assets from *different build passes* (the failure even
 hit the framework's own `dotnet.js`). It was **not** a fundamental fingerprint/import-map defect.
 
-### 2.3 Solution & verification (`813180a`)
+### 2.3 Solution & verification (`21b5cd1`)
 
 Method that works and is now the standard check:
 1. Ensure no orphaned servers (IDE build-host / MSBuild node processes are fine to leave; only kill stray
@@ -176,7 +176,7 @@ bUnit treated the import as a **different** module and recorded zero invocations
 handler. The two invocation-asserting tests (`Creates_…`, `Destroys_…`) had been failing since the `?v=`
 query was first introduced — the green claim was stale.
 
-### 3.3 Solution (`33088d5`)
+### 3.3 Solution (`1750177`)
 
 Use bUnit's **catch-all** `ctx.JSInterop.SetupModule()` (no URL), which matches any module import
 regardless of the cache-busting query, and returns a `BunitJSModuleInterop` whose `.Invocations` we
@@ -191,10 +191,10 @@ design.
 
 | Commit | What |
 | --- | --- |
-| `813180a` | Confirm visual verification of all chart routes (resolved the stale-build issue; updated HANDOFF). |
-| `61ecec6` | First correction of the `?v=` rationale comment. |
-| `0410dde` | Fix the overstated "fingerprinting doesn't work in published WASM" claim (it does; off by default). |
-| `33088d5` | Derive the `?v=` query from the assembly version; fix the silently-failing bUnit module tests. |
+| `21b5cd1` | Confirm visual verification of all chart routes (resolved the stale-build issue; updated HANDOFF). |
+| `2dc3adc` | First correction of the `?v=` rationale comment. |
+| `b35dae9` | Fix the overstated "fingerprinting doesn't work in published WASM" claim (it does; off by default). |
+| `1750177` | Derive the `?v=` query from the assembly version; fix the silently-failing bUnit module tests. |
 
 Earlier WIP (prior session): vendored zoom + data-labels plugins, vendored `@kurkle/color`, restructured
 to a single esbuild bundle, added `/zoom` and `/datalabels` demos.
