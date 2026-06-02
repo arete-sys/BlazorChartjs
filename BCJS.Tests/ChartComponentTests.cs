@@ -10,7 +10,9 @@ public class ChartComponentTests
     {
         var ctx = new TestContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose; // auto-succeed + record interop calls
-        module = ctx.JSInterop.SetupModule("./_content/BCJS/chart-interop.js");
+        // Catch-all module setup: the component imports the script with a cache-busting "?v=<version>"
+        // query, so matching a fixed URL here would miss it (and silently record zero invocations).
+        module = ctx.JSInterop.SetupModule();
         return ctx;
     }
 

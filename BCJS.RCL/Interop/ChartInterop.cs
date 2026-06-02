@@ -18,8 +18,10 @@ public sealed class ChartInterop : IAsyncDisposable
     // plain name means the bare path resolves to a real file everywhere. The ?v= query then supplies the
     // version-bump cache busting the un-fingerprinted file otherwise lacks; it bypasses the import map and
     // is ignored by static file servers, resolving to the plain file across dev, server-hosted, and
-    // dumb-static-host deployments alike.
-    private const string ModulePath = "./_content/BCJS/chart-interop.js?v=1.0.0";
+    // dumb-static-host deployments alike. The query is derived from the assembly version so it advances
+    // automatically on each release — no manual bump to forget.
+    private static readonly string ModulePath =
+        $"./_content/BCJS/chart-interop.js?v={typeof(ChartInterop).Assembly.GetName().Version}";
     private readonly Lazy<Task<IJSObjectReference>> _module;
 
     /// <summary>Initializes a new instance of the <see cref="ChartInterop"/> class.</summary>
