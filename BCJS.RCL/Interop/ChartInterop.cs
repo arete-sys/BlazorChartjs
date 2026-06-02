@@ -9,12 +9,16 @@ namespace BCJS.Interop;
 /// </summary>
 public sealed class ChartInterop : IAsyncDisposable
 {
-    // Verified 2026-06-02 that the bare "./_content/BCJS/chart-interop.js" also loads (dev remaps it via
-    // the import map to the fingerprinted asset; published WASM leaves the file un-fingerprinted with no
-    // import-map entry). The version query is kept purely for cache control: RCL _content assets are NOT
-    // fingerprinted in published output, so the bare path would have no cache busting in production. The
-    // query busts the cache uniformly on version bumps across dev, server-hosted, and dumb-static-host
-    // deployments (static file servers ignore the query and serve the un-fingerprinted file).
+    // The module is loaded by this hardcoded path via dynamic import(). We deliberately do NOT fingerprint
+    // this RCL asset (no <StaticWebAssetFingerprintPattern>), so the physical file keeps its plain name on
+    // every host. Fingerprinting does work in published WASM (verified 2026-06-02: adding the pattern in the
+    // RCL renames the file to chart-interop.<hash>.js and emits an import-map entry that remaps the bare
+    // path) — but it would then make loading depend on the consumer emitting that import map
+    // (OverrideHtmlAssetPlaceholders), which isn't guaranteed for a redistributable library. Keeping the
+    // plain name means the bare path resolves to a real file everywhere. The ?v= query then supplies the
+    // version-bump cache busting the un-fingerprinted file otherwise lacks; it bypasses the import map and
+    // is ignored by static file servers, resolving to the plain file across dev, server-hosted, and
+    // dumb-static-host deployments alike.
     private const string ModulePath = "./_content/BCJS/chart-interop.js?v=1.0.0";
     private readonly Lazy<Task<IJSObjectReference>> _module;
 
