@@ -1,6 +1,6 @@
 # BCJS — Chart.js components for Blazor
 
-**BCJS** is a modern, clean-room-styled reimplementation of a Blazor Chart.js wrapper, targeting
+**BCJS** is a modern, clean reimplementation of a Blazor Chart.js wrapper, targeting
 **.NET 10** and **Chart.js 4.5.1**. It ships Chart.js as an isolated ES module (no global `<script>`
 tags, no jQuery), serializes its strongly-typed option model with **System.Text.Json source
 generators**, and releases the underlying chart via `IAsyncDisposable`.
@@ -111,6 +111,12 @@ The **zoom** and **data-labels** plugins are vendored as isolated ES modules and
 - **Data labels** — set `Options.RegisterDataLabels = true` and configure `Plugins.DataLabels`.
 - **Zoom / pan** — configure `Options.Plugins.Zoom`. Wheel and drag zoom work out of the box; touch
   pinch/pan needs a real Hammer build (BCJS ships a no-op stub to keep the module isolated).
+
+## Credits
+
+- **Original library:** [PSC.Blazor.Components.Chartjs](https://github.com/erossini/BlazorChartjs) by
+  Enrico Rossini — BCJS derives from its design and API (MIT).
+- **BCJS rewrite:** **Arete**, with [Claude](https://claude.com/claude-code) (Anthropic) as co-author.
 
 ## License
 
