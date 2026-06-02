@@ -9,8 +9,12 @@ namespace BCJS.Interop;
 /// </summary>
 public sealed class ChartInterop : IAsyncDisposable
 {
-    // A version query keeps this out of the net10 fingerprint import map (which would rewrite the URL
-    // to a fingerprinted name the host may not serve) while still busting the cache on version bumps.
+    // Verified 2026-06-02 that the bare "./_content/BCJS/chart-interop.js" also loads (dev remaps it via
+    // the import map to the fingerprinted asset; published WASM leaves the file un-fingerprinted with no
+    // import-map entry). The version query is kept purely for cache control: RCL _content assets are NOT
+    // fingerprinted in published output, so the bare path would have no cache busting in production. The
+    // query busts the cache uniformly on version bumps across dev, server-hosted, and dumb-static-host
+    // deployments (static file servers ignore the query and serve the un-fingerprinted file).
     private const string ModulePath = "./_content/BCJS/chart-interop.js?v=1.0.0";
     private readonly Lazy<Task<IJSObjectReference>> _module;
 
