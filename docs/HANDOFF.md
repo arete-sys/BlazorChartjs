@@ -69,7 +69,7 @@ framework's own `dotnet.js`). The port was cleaned at end of session (0 listener
    (`Get-NetTCPConnection -LocalPort 5137`). Then start **one** `dotnet run --project BCJS.Sample -c Release
    --launch-profile http` and **wait for `Application started`** in the log before testing.
 2. **Re-test rendering** with the existing Puppeteer harness (uses the installed Chrome):
-   - Scripts live in `a local scratch dir (outside the repo)\` — `shot.js` (screenshots + painted-pixel
+   - Scripts live in a local scratch dir kept outside the repo — `shot.js` (screenshots + painted-pixel
      check → `artifacts-shots/`), `diag.js` / `diag2.js` (import/4xx diagnostics).
    - Run via PowerShell from that dir: `node shot.js`. Success = `paintedPixels` > 0 per canvas, no errors.
    - (Puppeteer installed there via `npm i puppeteer-core`.)

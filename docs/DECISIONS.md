@@ -152,8 +152,9 @@ Method that works and is now the standard check:
    `dotnet run` instances). Confirm port 5137 has no listener.
 2. Fresh `dotnet build -c Release`, then **one** `dotnet run --project BCJS.Sample -c Release
    --launch-profile http`; wait for `Application started`.
-3. Run the Puppeteer harness in `a local scratch dir (outside the repo)\` (`node shot.js`): screenshots +
-   painted-pixel check into `artifacts-shots/`. Success = `paintedPixels > 0` per canvas, no errors.
+3. Run the Puppeteer harness (`node shot.js`, a local puppeteer-core script kept outside the repo):
+   screenshots + painted-pixel check into `artifacts-shots/`. Success = `paintedPixels > 0` per canvas,
+   no errors.
 
 **Result (2026-06-02):** all 7 routes render with zero console/page errors — line 174 823, bar 207 549,
 pie+doughnut 68 681/53 331, radar 46 887, mixed 219 831, zoom 33 526, datalabels 205 695. Screenshots
