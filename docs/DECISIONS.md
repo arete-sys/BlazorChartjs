@@ -185,6 +185,35 @@ assert on. Suite is now genuinely **15/15**.
 **Lesson:** don't couple module-interop tests to the exact import URL; the URL carries a version query by
 design.
 
+### 3.4 Real-browser rendering check in C# — `BCJS.VisualTests` (`4f3b3ab`)
+
+**Problem:** bUnit mocks JS interop and never executes Chart.js, so it cannot prove a canvas actually
+rendered. The only way to verify rendering is to drive a real browser. That was first done with a local
+JS + PowerShell harness (`visual-test/`, git-ignored) — fine for ad-hoc runs, but not a gating test and
+on a separate toolchain.
+
+**Decision:** add a C# `BCJS.VisualTests` xUnit project using **Playwright for .NET** with the installed
+Chrome (`Channel = "chrome"`, so **no browser download** — same as the JS harness's puppeteer-core).
+
+**Why Playwright + installed Chrome (over PuppeteerSharp / bundled Chromium / Selenium):** first-class
+async .NET API; the bundled Node driver ships in the NuGet package (no `playwright install`), and
+`Channel="chrome"` reuses the machine's Chrome so there's no ~130 MB Chromium fetch; folds into
+`dotnet test` as a real, gating assertion.
+
+**Shape:**
+- `SampleServerFixture` (`IAsyncLifetime`) starts **one** `BCJS.Sample` dev server on a free loopback
+  port (standalone WASM can't run in-process, so it must be served + booted), waits for HTTP readiness,
+  launches Chrome, and disposes the whole process tree on teardown.
+- `ChartRenderingTests`: a `[Theory]` per route (`/line`…`/datalabels`) asserting `paintedPixels > 0`
+  per canvas and zero console/page errors; also writes screenshots to `artifacts-shots/`.
+- Tagged `[Trait("Category", "Visual")]`. Fast unit run stays fast via `BCJS.Tests`; exclude the heavy
+  test elsewhere with `dotnet test --filter Category!=Visual`. Full suite: `dotnet test BCJS.slnx`.
+
+**Kept the JS harness** (`visual-test/`) for quick ad-hoc diagnostics (`diag.js`, `importmap-test.js`)
+alongside the C# test, per decision.
+
+Verified: 7/7 pass (~24 s incl. WASM boot), server tree cleaned up, screenshots written.
+
 ---
 
 ## 4. Commit map
@@ -195,6 +224,7 @@ design.
 | `2dc3adc` | First correction of the `?v=` rationale comment. |
 | `b35dae9` | Fix the overstated "fingerprinting doesn't work in published WASM" claim (it does; off by default). |
 | `1750177` | Derive the `?v=` query from the assembly version; fix the silently-failing bUnit module tests. |
+| `4f3b3ab` | Add `BCJS.VisualTests` — C# Playwright real-browser rendering tests (installed Chrome). |
 
 Earlier WIP (prior session): vendored zoom + data-labels plugins, vendored `@kurkle/color`, restructured
 to a single esbuild bundle, added `/zoom` and `/datalabels` demos.
