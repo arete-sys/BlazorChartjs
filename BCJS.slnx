@@ -2,4 +2,5 @@
   <Project Path="BCJS.RCL/BCJS.RCL.csproj" />
   <Project Path="BCJS.Sample/BCJS.Sample.csproj" />
   <Project Path="BCJS.Tests/BCJS.Tests.csproj" />
+  <Project Path="BCJS.VisualTests/BCJS.VisualTests.csproj" />
 </Solution>
