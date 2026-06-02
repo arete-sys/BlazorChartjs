@@ -3,7 +3,7 @@
 All notable changes to BCJS are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] — unreleased
+## [1.0.0] — 2026-06-02
 
 The first release of **BCJS**, a ground-up rewrite of the Blazor Chart.js wrapper originally published
 as `PSC.Blazor.Components.Chartjs`. BCJS keeps that library's public shape and JSON contract while
@@ -26,6 +26,7 @@ modernizing the runtime, serialization, and JS interop. See [`MIGRATION.md`](MIG
 - `BCJS.Sample` (Blazor WebAssembly) demonstrating line, bar, pie/doughnut, radar, and mixed charts
   with add-data, update, and destroy.
 - `BCJS.Tests` (xUnit serialization + bUnit component lifecycle).
+- `BCJS.VisualTests` (Playwright real-browser rendering checks across all chart routes).
 
 ### Changed (deviations from the original)
 - Public methods are `Task`-based instead of `async void`.
