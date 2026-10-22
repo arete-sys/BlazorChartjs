@@ -6,9 +6,9 @@ namespace BCJS.Tests;
 
 public class ChartComponentTests
 {
-    private static TestContext CreateContext(out BunitJSModuleInterop module)
+    private static BunitContext CreateContext(out BunitJSModuleInterop module)
     {
-        var ctx = new TestContext();
+        var ctx = new BunitContext();
         ctx.JSInterop.Mode = JSRuntimeMode.Loose; // auto-succeed + record interop calls
         // Catch-all module setup: the component imports the script with a cache-busting "?v=<version>"
         // query, so matching a fixed URL here would miss it (and silently record zero invocations).
@@ -30,7 +30,7 @@ public class ChartComponentTests
         using var ctx = CreateContext(out _);
         var config = SampleConfig();
 
-        var cut = ctx.RenderComponent<Chart>(p => p.Add(c => c.Config, config));
+        var cut = ctx.Render<Chart>(p => p.Add(c => c.Config, config));
 
         Assert.Equal(config.CanvasId, cut.Find("canvas").Id);
     }
@@ -41,23 +41,42 @@ public class ChartComponentTests
         using var ctx = CreateContext(out var module);
         var config = SampleConfig();
 
-        ctx.RenderComponent<Chart>(p => p.Add(c => c.Config, config));
+        ctx.Render<Chart>(p => p.Add(c => c.Config, config));
 
         var invocation = Assert.Single(module.Invocations["create"]);
         Assert.Equal(config.CanvasId, invocation.Arguments[0]);
     }
 
     [Fact]
-    public void Destroys_the_chart_on_dispose()
+    public async Task Destroys_the_chart_on_dispose()
     {
         using var ctx = CreateContext(out var module);
         var config = SampleConfig();
-        ctx.RenderComponent<Chart>(p => p.Add(c => c.Config, config));
+        ctx.Render<Chart>(p => p.Add(c => c.Config, config));
 
-        ctx.DisposeComponents();
+        await ctx.DisposeComponentsAsync();
 
         var invocation = Assert.Single(module.Invocations["destroy"]);
         Assert.Equal(config.CanvasId, invocation.Arguments[0]);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_pushes_changed_data_to_the_existing_chart()
+    {
+        using var ctx = CreateContext(out var module);
+        var config = SampleConfig();
+        var cut = ctx.Render<Chart>(p => p.Add(c => c.Config, config));
+
+        config.Data.Labels = ["2021", "2022", "2023"];
+        config.Data.Datasets[0].Data = [5, 6, 7];
+        await cut.InvokeAsync(cut.Instance.UpdateAsync);
+
+        Assert.Single(module.Invocations["create"]);
+        var update = Assert.Single(module.Invocations["update"]);
+        Assert.Equal(config.CanvasId, update.Arguments[0]);
+        var json = Assert.IsType<string>(update.Arguments[2]);
+        Assert.Contains("\"labels\":[\"2021\",\"2022\",\"2023\"]", json, StringComparison.Ordinal);
+        Assert.Contains("\"data\":[5,6,7]", json, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -65,7 +84,7 @@ public class ChartComponentTests
     {
         using var ctx = CreateContext(out _);
 
-        var cut = ctx.RenderComponent<Chart>(p => p
+        var cut = ctx.Render<Chart>(p => p
             .Add(c => c.Config, SampleConfig())
             .Add(c => c.Class, "my-chart")
             .Add(c => c.Height, "300px"));

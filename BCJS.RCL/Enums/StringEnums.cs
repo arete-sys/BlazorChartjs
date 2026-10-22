@@ -251,3 +251,28 @@ public enum TextDirection
     /// <summary><c>"rtl"</c></summary>
     RTL,
 }
+
+/// <summary>Horizontal text alignment (Chart.js <c>TextAlign</c>, e.g. tooltip <c>titleAlign</c>/<c>bodyAlign</c>).</summary>
+[JsonConverter(typeof(CamelCaseJsonStringEnumConverter<TextAlign>))]
+public enum TextAlign
+{
+    /// <summary><c>"left"</c></summary>
+    Left,
+
+    /// <summary><c>"center"</c></summary>
+    Center,
+
+    /// <summary><c>"right"</c></summary>
+    Right,
+}
+
+/// <summary>Built-in tooltip positioner (Chart.js tooltip <c>position</c>).</summary>
+[JsonConverter(typeof(CamelCaseJsonStringEnumConverter<TooltipPosition>))]
+public enum TooltipPosition
+{
+    /// <summary><c>"average"</c> — the average position of the active items.</summary>
+    Average,
+
+    /// <summary><c>"nearest"</c> — the position of the element closest to the event.</summary>
+    Nearest,
+}

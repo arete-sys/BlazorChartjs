@@ -51,6 +51,14 @@ public class DataLabels
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Color { get; set; }
 
+    /// <summary>
+    /// BCJS label text format (e.g. a percentage), applied in the browser so it works on Blazor Server
+    /// and WebAssembly. When unset the plugin's default formatter is used.
+    /// </summary>
+    [JsonPropertyName("bcjsFormat")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DataLabelsFormat? Format { get; set; }
+
     /// <summary>Label font.</summary>
     [JsonPropertyName("font")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -100,4 +108,34 @@ public class DataLabels
     [JsonPropertyName("textShadowColor")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? TextShadowColor { get; set; }
+}
+
+/// <summary>
+/// Declarative data-label text format (see <see cref="DataLabels.Format"/>). Applies to numeric data;
+/// other values are shown unchanged.
+/// </summary>
+public sealed class DataLabelsFormat
+{
+    /// <summary>
+    /// When <see langword="true"/>, the label shows the value as a percentage of the dataset total
+    /// (counting only visible items) instead of the raw value.
+    /// </summary>
+    [JsonPropertyName("percentage")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Percentage { get; set; }
+
+    /// <summary>Digits after the decimal point. When unset the number is shown as-is.</summary>
+    [JsonPropertyName("decimals")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Decimals { get; set; }
+
+    /// <summary>Text placed before the number (e.g. <c>"$"</c>).</summary>
+    [JsonPropertyName("prefix")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Prefix { get; set; }
+
+    /// <summary>Text placed after the number (e.g. <c>"%"</c>).</summary>
+    [JsonPropertyName("suffix")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Suffix { get; set; }
 }

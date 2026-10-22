@@ -1,0 +1,170 @@
+@page "/data-update"
+
+<PageTitle>Data updates — BCJS</PageTitle>
+<h1>Data updates</h1>
+
+<p>
+    Switch the range: each chart's labels and values (including the number of points, slices and
+    datasets) are replaced and <code>UpdateAsync()</code> redraws the same chart instance in place.
+</p>
+
+<div class="btn-group mb-3" role="group" aria-label="Date range">
+    <button id="range-1y" class="btn @(_fiveYears ? "btn-outline-primary" : "btn-primary")" @onclick="() => SetRangeAsync(false)">1 year</button>
+    <button id="range-5y" class="btn @(_fiveYears ? "btn-primary" : "btn-outline-primary")" @onclick="() => SetRangeAsync(true)">5 years</button>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h4>Pie</h4>
+        <Chart @ref="_pieChart" Config="_pie" Height="300px" />
+    </div>
+    <div class="col-lg-6">
+        <h4>Stacked bar</h4>
+        <Chart @ref="_stackedChart" Config="_stacked" Height="300px" />
+    </div>
+    <div class="col-lg-6">
+        <h4>Horizontal bar</h4>
+        <Chart @ref="_horizontalChart" Config="_horizontal" Height="300px" />
+    </div>
+    <div class="col-lg-6">
+        <h4>Line</h4>
+        <Chart @ref="_lineChart" Config="_line" Height="300px" />
+    </div>
+</div>
+
+@code {
+    private static readonly string[] Months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    private static readonly string[] Years = ["2022", "2023", "2024", "2025", "2026"];
+
+    private readonly PieChartConfig _pie = new();
+    private readonly BarChartConfig _stacked = new();
+    private readonly BarChartConfig _horizontal = new();
+    private readonly LineChartConfig _line = new();
+    private Chart? _pieChart;
+    private Chart? _stackedChart;
+    private Chart? _horizontalChart;
+    private Chart? _lineChart;
+    private bool _fiveYears;
+
+    protected override void OnInitialized()
+    {
+        _pie.Options = new PieOptions
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins { Legend = new Legend { Position = LegendPosition.Right } },
+        };
+        _stacked.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins
+            {
+                Tooltip = new Tooltip { Html = new HtmlTooltip(), Mode = InteractionMode.Index, Intersect = false },
+            },
+            Scales = new Dictionary<string, Axis>
+            {
+                [Scales.XAxisId] = new Axis { Stacked = true },
+                [Scales.YAxisId] = new Axis { Stacked = true, BeginAtZero = true },
+            },
+        };
+        _horizontal.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            IndexAxis = Axes.Y,
+            Plugins = new Plugins { Legend = new Legend { Display = false } },
+            Scales = new Dictionary<string, Axis> { [Scales.XAxisId] = new Axis { BeginAtZero = true } },
+        };
+        _line.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Scales = new Dictionary<string, Axis> { [Scales.YAxisId] = new Axis { BeginAtZero = true } },
+        };
+
+        ApplyRange();
+    }
+
+    private async Task SetRangeAsync(bool fiveYears)
+    {
+        if (_fiveYears == fiveYears)
+            return;
+        _fiveYears = fiveYears;
+        ApplyRange();
+
+        foreach (var chart in new[] { _pieChart, _stackedChart, _horizontalChart, _lineChart })
+        {
+            if (chart is not null)
+                await chart.UpdateAsync();
+        }
+    }
+
+    // The two ranges differ in point, slice and dataset counts on purpose: that is what the page tests.
+    private void ApplyRange()
+    {
+        if (_fiveYears)
+        {
+            _pie.Data.Labels = ["Enterprise", "Mid-market", "SMB"];
+            _pie.Data.Datasets = [Pie([410, 265, 180])];
+
+            _stacked.Data.Labels = [.. Years];
+            _stacked.Data.Datasets =
+            [
+                Bar("New", [310, 360, 420, 480, 530], 1),
+                Bar("Returning", [220, 260, 300, 340, 390], 3),
+                Bar("Referred", [60, 75, 90, 120, 150], 4),
+            ];
+
+            _horizontal.Data.Labels = ["North", "South", "East", "West", "Central"];
+            _horizontal.Data.Datasets = [Bar("Revenue", [920, 780, 640, 1010, 560], 5)];
+
+            _line.Data.Labels = [.. Years];
+            _line.Data.Datasets = [Line("Active users", [1200, 1850, 2400, 3100, 3900], 1)];
+        }
+        else
+        {
+            _pie.Data.Labels = ["Enterprise", "Mid-market", "SMB", "Startup", "Public sector"];
+            _pie.Data.Datasets = [Pie([95, 60, 42, 30, 18])];
+
+            _stacked.Data.Labels = [.. Months];
+            _stacked.Data.Datasets =
+            [
+                Bar("New", [32, 38, 41, 36, 44, 47, 50, 45, 52, 55, 49, 58], 1),
+                Bar("Returning", [25, 27, 30, 29, 33, 35, 34, 36, 39, 38, 41, 43], 3),
+            ];
+
+            _horizontal.Data.Labels = ["North", "South", "East"];
+            _horizontal.Data.Datasets = [Bar("Revenue", [210, 160, 120], 5)];
+
+            _line.Data.Labels = [.. Months];
+            _line.Data.Datasets = [Line("Active users", [3100, 3180, 3260, 3240, 3390, 3480, 3520, 3610, 3700, 3760, 3820, 3900], 1)];
+        }
+    }
+
+    private static PieDataset Pie(List<decimal?> data) => new()
+    {
+        Label = "Customers",
+        Data = data,
+        BackgroundColor = [.. SampleColors.Palette.Take(data.Count)],
+    };
+
+    private static BarDataset Bar(string label, List<decimal?> data, int color) => new()
+    {
+        Label = label,
+        Data = data,
+        BackgroundColor = [SampleColors.PaletteFill[color]],
+        BorderColor = [SampleColors.Palette[color]],
+        BorderWidth = 1,
+    };
+
+    private static LineDataset Line(string label, List<decimal?> data, int color) => new()
+    {
+        Label = label,
+        Data = data,
+        BorderColor = SampleColors.Palette[color],
+        BackgroundColor = SampleColors.PaletteFill[color],
+        Fill = true,
+        Tension = 0.3M,
+    };
+}

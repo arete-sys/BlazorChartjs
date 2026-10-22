@@ -96,7 +96,7 @@ Ships under `wwwroot/`: the wrapper `Chart.js`, plus `wwwroot/lib/**` containing
 | # | Original | BCJS rewrite | Why |
 |---|---|---|---|
 | D-1 | `IDisposable`, empty `Dispose()`; JS chart never destroyed | `IAsyncDisposable`; interop `destroy(id)` tears down the Chart.js instance & `IJSObjectReference` | Brief requires `IAsyncDisposable` on JS-ref holders; fixes a real leak. |
-| D-2 | `eval(jsonConfig)` in JS | Pass a real object across interop; **no `eval`** | Security + correctness. |
+| D-2 | `eval(jsonConfig)` in JS | Pass a real object across interop; **no `eval`** | Security + correctness. The config is never `eval`'d. Since 1.2.0 the one exception is opt-in: `HtmlTooltip.Function` compiles a developer-written function (see DECISIONS 4.4). |
 | D-3 | Reflection STJ | **STJ source generators** (`JsonSerializerContext`, camelCase policy) | Brief; trimming/AOT friendly. |
 | D-4 | Global `<script>` tags + globals (`window.Chart`, `ChartDataLabels`, hammer) | **JS isolation**: collocated ES module `import`s Chart.js 4.5.1 + plugins; no global pollution, no jQuery/hammer global | Brief. (Zoom's hammer dependency handled inside the module.) |
 | D-5 | `OnAfterRenderAsync` news up interop every config change; no update path | Proper create/update/destroy lifecycle; `Update()` diff instead of recreate | Correctness + the demo's "update" story. |

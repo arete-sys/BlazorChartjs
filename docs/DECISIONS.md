@@ -207,7 +207,8 @@ async .NET API; the bundled Node driver ships in the NuGet package (no `playwrig
 - `ChartRenderingTests`: a `[Theory]` per route (`/line`…`/datalabels`) asserting `paintedPixels > 0`
   per canvas and zero console/page errors; also writes screenshots to `artifacts-shots/`.
 - Tagged `[Trait("Category", "Visual")]`. Fast unit run stays fast via `BCJS.Tests`; exclude the heavy
-  test elsewhere with `dotnet test --filter Category!=Visual`. Full suite: `dotnet test BCJS.slnx`.
+  test elsewhere with `dotnet test --solution BCJS.slnx --filter-not-trait "Category=Visual"`. Full suite:
+  `dotnet test --solution BCJS.slnx` (MTP mode, set in `global.json`, since the move to xunit v3).
 
 **Kept the JS harness** (`visual-test/`) for quick ad-hoc diagnostics (`diag.js`, `importmap-test.js`)
 alongside the C# test, per decision.
@@ -216,7 +217,62 @@ Verified: 7/7 pass (~24 s incl. WASM boot), server tree cleaned up, screenshots 
 
 ---
 
-## 4. Commit map
+## 4. In-place updates and per-chart data labels (1.2.0)
+
+### 4.1 `update()` mutates the live chart instead of rebuilding it
+
+Through 1.1, the JS `update()` destroyed the chart and built a new one. That redrew correctly but
+dropped the transition (the new data animated in from zero) and any instance state. A filter that
+switches the same chart between ranges (1 year / 5 years) should animate between the two.
+
+**Decision:** `update()` keeps the instance: it replaces `labels`, merges each new dataset into the
+existing dataset object at the same index (removed keys deleted, extra datasets appended, surplus ones
+truncated), assigns the new `options` and calls `chart.update()`. Reusing the dataset objects matters:
+Chart.js drops a dataset's controller when its object is no longer referenced, which would lose the
+animation. It still rebuilds when the chart type changes or the data-labels plugin is toggled (inline
+plugins are fixed at construction). `BCJS.VisualTests` checks the canvas's `$chartjs` expando keeps its
+identity across updates; against the 1.1 bundle that check fails.
+
+### 4.2 Data labels are attached per chart
+
+`Chart.register(ChartDataLabels)` is global, and the plugin defaults to `display: true`, so after one
+chart opted in every chart created later drew value labels (reproduced by navigating `/datalabels` →
+`/bar` in the sample). **Decision:** pass it as an inline plugin (`config.plugins`) only for charts with
+`registerDataLabels`. Zoom stays globally registered: it is inert unless a chart configures it.
+
+### 4.3 HTML tooltip built into the interop module
+
+The canvas tooltip draws one font per section, so the dashboard widget's one-line "< 5k: **34.83**"
+(ported from ApexCharts) is impossible on the canvas. **Decision:** `Tooltip.Html` switches to the
+Chart.js `external` tooltip, implemented once in the interop module. A C# delegate cannot be serialized
+into Chart.js options, and a .NET round-trip per hover would lag on Blazor Server, so the handler is
+BCJS's own JS, configured by data. Choices: ApexCharts-like markup (title row, label/value spans) so
+existing CSS habits carry over; text via `textContent` (no HTML injection); default styles under
+`:where()` with `--bcjs-tooltip-*` variables so host CSS always wins, while options set explicitly in
+C# become inline styles; one element per chart, hidden on leave, removed on destroy and when an
+in-place update turns the option off.
+
+### 4.4 Opt-in `eval` for custom tooltip content (`HtmlTooltip.Function`)
+
+Some tooltips need logic the built-in rows can't express (a share of the total, extra lines). ApexCharts'
+answer is `tooltip.custom`, a JS function; Blazor-ApexCharts passes it as a C# string and runs it with
+`eval`, and Apex inserts the returned HTML with `innerHTML`, unescaped (verified in ApexCharts v5.3.6
+and on `main`, `src/modules/tooltip/Labels.js`).
+
+**Decision:** offer the same, deliberately as an exception to D-2 (the config itself is still never
+`eval`'d). Constraints that keep the exception small:
+- **Opt-in:** indirect `eval` runs only for charts that set `Function`, so other pages work under a CSP
+  without `'unsafe-eval'` (verified with a CSP that blocks eval: `/dashboard-pie` runs clean).
+- **Fails safe:** a blocked compile, a throw or a bad return value logs one console error and falls back
+  to the built-in tooltip (verified: `/custom-tooltip` under that CSP shows the built-in rows).
+- **Safer returns than Apex's string:** a DOM element is accepted (as Apex also allows), and an
+  `escape` helper is passed in for string results.
+- **Documented risk:** the string is code. It must be a developer-written constant, never built from
+  data, user input or AI output (apps that build charts from AI output make this a real risk).
+
+---
+
+## 5. Commit map
 
 | Commit | What |
 | --- | --- |
@@ -231,7 +287,7 @@ to a single esbuild bundle, added `/zoom` and `/datalabels` demos.
 
 ---
 
-## 5. Open items (non-blocking)
+## 6. Open items (non-blocking)
 
 - Add an MSBuild target to run esbuild at build time (today the bundle is a committed artifact, regen
   manually — see 1.2).

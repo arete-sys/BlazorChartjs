@@ -26,7 +26,7 @@ jobs:
         with:
           global-json-file: global.json
       - name: Build & test (library + unit tests)
-        run: dotnet test BCJS.Tests/BCJS.Tests.csproj -c Release
+        run: dotnet test --project BCJS.Tests/BCJS.Tests.csproj -c Release
 
   # Heavier gate: full solution compile + the Playwright real-browser rendering tests.
   visual:
@@ -45,7 +45,7 @@ jobs:
         run: dotnet build BCJS.slnx -c Release
       # The fixture starts the sample server and drives Chrome across all chart routes.
       - name: Visual tests
-        run: dotnet test BCJS.VisualTests/BCJS.VisualTests.csproj -c Release --no-build
+        run: dotnet test --project BCJS.VisualTests/BCJS.VisualTests.csproj -c Release --no-build
       # Keep the rendered screenshots for inspection, even when the run fails.
       - name: Upload screenshots
         if: always()

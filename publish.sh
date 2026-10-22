@@ -21,7 +21,7 @@ PROJECT="$ROOT/BCJS.RCL/BCJS.RCL.csproj"
 rm -rf "$ARTIFACTS"
 
 echo "Packing BCJS $VERSION ..."
-dotnet pack "$PROJECT" -c Release -p:Version="$VERSION" -o "$ARTIFACTS"
+dotnet pack "$PROJECT" -c Release -p:Version="$VERSION" -p:ContinuousIntegrationBuild=true -o "$ARTIFACTS"
 
 echo "Pushing to $SOURCE ..."
 if [ -n "$API_KEY" ]; then

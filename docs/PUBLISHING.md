@@ -45,10 +45,11 @@ not part of the publish pipeline.)
 
 ## Option B — local / manual
 
-From the repo root, pass the version explicitly:
+From the repo root, pass the version explicitly, with `-p:ContinuousIntegrationBuild=true` for a
+deterministic build (the scripts below do this; GitHub Actions sets it automatically):
 
 ```bash
-dotnet pack -c Release -p:Version=1.2.3 -o ./artifacts
+dotnet pack -c Release -p:Version=1.2.3 -p:ContinuousIntegrationBuild=true -o ./artifacts
 dotnet nuget push "./artifacts/*.nupkg" --api-key <KEY> --source https://api.nuget.org/v3/index.json --skip-duplicate
 ```
 

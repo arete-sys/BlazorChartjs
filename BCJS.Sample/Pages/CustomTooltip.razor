@@ -1,0 +1,101 @@
+@page "/custom-tooltip"
+
+<PageTitle>Custom tooltip — BCJS</PageTitle>
+<h1>Custom tooltip function</h1>
+
+<p>
+    <code>Tooltip.Html.Function</code> is a JavaScript function, written as a C# string, that builds the
+    tooltip content (like ApexCharts' <code>tooltip.custom</code>). It returns an HTML string or a DOM
+    element. It is compiled with <code>eval</code> only for charts that use it, so a page with a Content
+    Security Policy must allow <code>'unsafe-eval'</code>. Only pass constant, developer-written code.
+</p>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h4>Returns an HTML string</h4>
+        <p class="text-muted small">Data is wrapped in <code>escape(...)</code>, so the team
+            "R&amp;D &lt;team&gt;" shows as text instead of being parsed as HTML.</p>
+        <Chart Config="_bar" Height="300px" />
+    </div>
+    <div class="col-lg-6">
+        <h4>Returns a DOM element</h4>
+        <p class="text-muted small">Built with <code>textContent</code>, so no escaping is needed.</p>
+        <Chart Config="_doughnut" Height="300px" />
+    </div>
+</div>
+
+@code {
+    // Returned HTML is not escaped: every piece of data must go through escape().
+    private const string ShareTooltip = """
+        ({ dataPoints, escape }) => {
+          const p = dataPoints[0];
+          const total = p.dataset.data.reduce((sum, v) => sum + v, 0);
+          const share = (p.raw / total * 100).toFixed(1);
+          return `<div style="font-weight:bold">${escape(p.label)}</div>`
+               + `<div>${escape(p.formattedValue)} tickets (${share}% of total)</div>`;
+        }
+        """;
+
+    private const string OrganizationsTooltip = """
+        ({ dataPoints }) => {
+          const p = dataPoints[0];
+          const box = document.createElement('div');
+          const name = document.createElement('strong');
+          name.textContent = p.label;
+          const count = document.createElement('div');
+          count.textContent = `${p.formattedValue} organizations`;
+          box.append(name, count);
+          return box;
+        }
+        """;
+
+    private readonly BarChartConfig _bar = new();
+    private readonly DoughnutChartConfig _doughnut = new();
+
+    protected override void OnInitialized()
+    {
+        _bar.Data.Labels = ["Sales", "R&D <team>", "Support"];
+        _bar.Data.Datasets.Add(new BarDataset
+        {
+            Label = "Tickets",
+            Data = [120, 150, 90],
+            BackgroundColor = [SampleColors.PaletteFill[1]],
+            BorderColor = [SampleColors.Palette[1]],
+            BorderWidth = 1,
+        });
+        _bar.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins
+            {
+                Legend = new Legend { Display = false },
+                Tooltip = new Tooltip { Html = new HtmlTooltip { Function = ShareTooltip }, Intersect = false },
+            },
+            Scales = new Dictionary<string, Axis> { [Scales.YAxisId] = new Axis { BeginAtZero = true } },
+        };
+
+        _doughnut.Data.Labels = ["> 100k", "50k-100k", "25k-50k", "5k-25k", "< 5k"];
+        _doughnut.Data.Datasets.Add(new DoughnutDataset
+        {
+            Data = [44, 24, 11, 52, 70],
+            BackgroundColor = ["#F39B1E", "#F5A733", "#F7B44E", "#F9BE66", "#FDDD84"],
+        });
+        _doughnut.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins
+            {
+                Legend = new Legend { Position = LegendPosition.Right },
+                Tooltip = new Tooltip
+                {
+                    Html = new HtmlTooltip { Function = OrganizationsTooltip },
+                    BackgroundColor = "rgba(160, 98, 20, 0.92)",
+                    Padding = new Padding(10, 14, 10, 14),
+                    Intersect = false,
+                },
+            },
+        };
+    }
+}

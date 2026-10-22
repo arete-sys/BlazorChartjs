@@ -38,7 +38,7 @@ $project = Join-Path $root 'BCJS.RCL/BCJS.RCL.csproj'
 Remove-Item $artifacts -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host "Packing BCJS $Version ..."
-dotnet pack $project -c Release -p:Version=$Version -o $artifacts
+dotnet pack $project -c Release -p:Version=$Version -p:ContinuousIntegrationBuild=true -o $artifacts
 if ($LASTEXITCODE -ne 0) { throw 'dotnet pack failed.' }
 
 $push = @('nuget', 'push', (Join-Path $artifacts '*.nupkg'),

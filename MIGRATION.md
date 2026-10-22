@@ -1,4 +1,18 @@
-# Migrating from PSC.Blazor.Components.Chartjs to BCJS
+# Migrating to BCJS
+
+## Upgrading from BCJS 1.1 to 1.2
+
+1.2 adds options only, with two behaviour changes worth checking:
+
+- **Data labels are per chart.** In 1.1, `Options.RegisterDataLabels = true` registered the plugin
+  globally, so charts created later on the same page drew value labels too, even without the flag. If a
+  chart relied on that, set `RegisterDataLabels = true` on it.
+- **`UpdateAsync()` updates in place.** The chart is no longer destroyed and re-created, so it animates
+  from the old values to the new ones and keeps state held by the Chart.js instance (such as the hover
+  state or the zoom plugin's state). To force a fresh chart, remove the `<Chart>` from the render tree and
+  add it back.
+
+## Migrating from PSC.Blazor.Components.Chartjs to BCJS
 
 BCJS keeps the original's shape — the `<Chart>` component, the `*ChartConfig` entry points, the
 dataset/option model, and the JSON contract — so most migration is a namespace swap. This guide lists

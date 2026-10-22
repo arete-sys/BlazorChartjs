@@ -20,7 +20,7 @@ public sealed class SampleServerFixture : IAsyncLifetime
     public IPlaywright Playwright { get; private set; } = default!;
     public IBrowser Browser { get; private set; } = default!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         RepoRoot = LocateRepoRoot();
         var sampleProject = Path.Combine(RepoRoot, "BCJS.Sample", "BCJS.Sample.csproj");
@@ -55,7 +55,7 @@ public sealed class SampleServerFixture : IAsyncLifetime
         });
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (Browser is not null)
             await Browser.DisposeAsync();

@@ -1,0 +1,102 @@
+@page "/dashboard-pie"
+
+<PageTitle>Dashboard pie — BCJS</PageTitle>
+<h1>Dashboard pie</h1>
+
+<p>
+    A styled pie: orange shades, white percentage labels with a soft shadow, a right-hand legend with
+    round markers, and a dark amber HTML tooltip with no color square: "&lt; 5k:" regular and the value
+    bold on one line. No .NET callbacks are used, so the same config works on Blazor Server and
+    WebAssembly.
+</p>
+
+<p>
+    Canvas text does not follow the page's CSS, so the legend color comes from the theme and is pushed
+    with <code>UpdateAsync()</code> when the theme changes (the chart is updated in place).
+</p>
+
+<div class="btn-group mb-3" role="group" aria-label="Theme">
+    <button id="theme-light" class="btn @(_dark ? "btn-outline-secondary" : "btn-secondary")" @onclick="() => SetThemeAsync(false)">Light</button>
+    <button id="theme-dark" class="btn @(_dark ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => SetThemeAsync(true)">Dark</button>
+</div>
+
+<div class="dashboard-card @(_dark ? "dark" : null)">
+    <Chart @ref="_chart" Config="_config" Height="280px" />
+</div>
+
+@code {
+    // The canvas cannot inherit the page's CSS color, so the legend color comes from the theme.
+    private const string LegendTextLight = "#3c3c3c";
+    private const string LegendTextDark = "#e6e6e6";
+
+    private readonly PieChartConfig _config = new();
+    private readonly LegendLabels _legendLabels = new()
+    {
+        UsePointStyle = true,
+        PointStyle = PointStyle.Circle,
+        BoxHeight = 11,
+        Padding = 16,
+        Color = LegendTextLight,
+        Font = new Font { Size = 14 },
+    };
+    private Chart? _chart;
+    private bool _dark;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = ["> 100k", "50k-100k", "25k-50k", "5k-25k", "< 5k"];
+        _config.Data.Datasets.Add(new PieDataset
+        {
+            Data = [21.89M, 11.94M, 5.47M, 25.87M, 34.83M],
+            BackgroundColor = ["#F39B1E", "#F5A733", "#F7B44E", "#F9BE66", "#FDDD84"],
+            BorderWidth = 2,
+            HoverOffset = 4,
+        });
+
+        _config.Options = new PieOptions
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            RegisterDataLabels = true,
+            Plugins = new Plugins
+            {
+                Legend = new Legend
+                {
+                    Position = LegendPosition.Right,
+                    Labels = _legendLabels,
+                },
+                DataLabels = new DataLabels
+                {
+                    Format = new DataLabelsFormat { Percentage = true, Decimals = 1, Suffix = "%" },
+                    Anchor = DatalabelsAnchor.End,
+                    Align = DatalabelsAlign.Start,
+                    Offset = 14,
+                    Color = "#fff",
+                    Font = new Font { Size = 14, Weight = "bold" },
+                    TextShadowColor = "rgba(0, 0, 0, 0.55)",
+                    TextShadowBlur = 6,
+                },
+                Tooltip = new Tooltip
+                {
+                    Html = new HtmlTooltip(),
+                    BackgroundColor = "rgba(160, 98, 20, 0.92)",
+                    BodyColor = "#fff",
+                    BodyFont = new Font { Size = 14 },
+                    DisplayColors = false,
+                    CornerRadius = 6,
+                    Padding = new Padding(10, 14, 10, 14),
+                },
+            },
+        };
+    }
+
+    private async Task SetThemeAsync(bool dark)
+    {
+        if (_dark == dark)
+            return;
+        _dark = dark;
+        _legendLabels.Color = dark ? LegendTextDark : LegendTextLight;
+        if (_chart is not null)
+            await _chart.UpdateAsync();
+    }
+}

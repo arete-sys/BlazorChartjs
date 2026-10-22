@@ -61,6 +61,49 @@ public class Legend
 /// </summary>
 public class LegendLabels
 {
+    /// <summary>Width of the colored box, in pixels.</summary>
+    [JsonPropertyName("boxWidth")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? BoxWidth { get; set; }
+
+    /// <summary>Height of the colored box, in pixels (defaults to the font size).</summary>
+    [JsonPropertyName("boxHeight")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? BoxHeight { get; set; }
+
+    /// <summary>Label text color.</summary>
+    [JsonPropertyName("color")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Color { get; set; }
+
+    /// <summary>Label font.</summary>
+    [JsonPropertyName("font")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Font? Font { get; set; }
+
+    /// <summary>Padding between legend items, in pixels.</summary>
+    [JsonPropertyName("padding")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Padding { get; set; }
+
+    /// <summary>
+    /// Marker style used when <see cref="UsePointStyle"/> is on (see <see cref="Enums.PointStyle"/>).
+    /// For line/radar charts the dataset's own point style is used when this is unset.
+    /// </summary>
+    [JsonPropertyName("pointStyle")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PointStyle? PointStyle { get; set; }
+
+    /// <summary>Marker width when <see cref="UsePointStyle"/> is on, in pixels.</summary>
+    [JsonPropertyName("pointStyleWidth")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? PointStyleWidth { get; set; }
+
+    /// <summary>Whether the marker matches the point style (e.g. a circle) instead of a box.</summary>
+    [JsonPropertyName("usePointStyle")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? UsePointStyle { get; set; }
+
     /// <summary>Tells the interop module to install the legend label filter.</summary>
     [JsonInclude]
     [JsonPropertyName("hasFilter")]

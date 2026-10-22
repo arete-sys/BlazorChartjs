@@ -2398,9 +2398,9 @@ function parseMaxStyle(styleValue, node, parentProperty) {
   }
   return valueInPixels;
 }
-var getComputedStyle = (element) => element.ownerDocument.defaultView.getComputedStyle(element, null);
+var getComputedStyle2 = (element2) => element2.ownerDocument.defaultView.getComputedStyle(element2, null);
 function getStyle(el, property) {
-  return getComputedStyle(el).getPropertyValue(property);
+  return getComputedStyle2(el).getPropertyValue(property);
 }
 var positions = [
   "top",
@@ -2446,7 +2446,7 @@ function getRelativePosition(event, chart) {
     return event;
   }
   const { canvas, currentDevicePixelRatio } = chart;
-  const style = getComputedStyle(canvas);
+  const style = getComputedStyle2(canvas);
   const borderBox = style.boxSizing === "border-box";
   const paddings = getPositionedStyle(style, "padding");
   const borders = getPositionedStyle(style, "border", "width");
@@ -2472,7 +2472,7 @@ function getContainerSize(canvas, width, height) {
       height = canvas.clientHeight;
     } else {
       const rect = container.getBoundingClientRect();
-      const containerStyle = getComputedStyle(container);
+      const containerStyle = getComputedStyle2(container);
       const containerBorder = getPositionedStyle(containerStyle, "border", "width");
       const containerPadding = getPositionedStyle(containerStyle, "padding");
       width = rect.width - containerPadding.width - containerBorder.width;
@@ -2490,7 +2490,7 @@ function getContainerSize(canvas, width, height) {
 }
 var round1 = (v) => Math.round(v * 10) / 10;
 function getMaximumSize(canvas, bbWidth, bbHeight, aspectRatio) {
-  const style = getComputedStyle(canvas);
+  const style = getComputedStyle2(canvas);
   const margins = getPositionedStyle(style, "margin");
   const maxWidth = parseMaxStyle(style.maxWidth, canvas, "clientWidth") || INFINITY;
   const maxHeight = parseMaxStyle(style.maxHeight, canvas, "clientHeight") || INFINITY;
@@ -2556,8 +2556,8 @@ var supportsEventListenerOptions = (function() {
   }
   return passiveSupported;
 })();
-function readUsedSize(element, property) {
-  const value = getStyle(element, property);
+function readUsedSize(element2, property) {
+  const value = getStyle(element2, property);
   const matches = value && value.match(/^(\d+)(\.\d+)?px$/);
   return matches ? +matches[1] : void 0;
 }
@@ -3494,13 +3494,13 @@ function createDatasetContext(parent, index2) {
     type: "dataset"
   });
 }
-function createDataContext(parent, index2, element) {
+function createDataContext(parent, index2, element2) {
   return createContext(parent, {
     active: false,
     dataIndex: index2,
     parsed: void 0,
     raw: void 0,
-    element,
+    element: element2,
     index: index2,
     mode: "default",
     type: "data"
@@ -3863,14 +3863,14 @@ var DatasetController = class {
       meta.dataset.draw(ctx, area, start, count);
     }
     for (i = start; i < start + count; ++i) {
-      const element = elements2[i];
-      if (element.hidden) {
+      const element2 = elements2[i];
+      if (element2.hidden) {
         continue;
       }
-      if (element.active && drawActiveElementsOnTop) {
-        active.push(element);
+      if (element2.active && drawActiveElementsOnTop) {
+        active.push(element2);
       } else {
-        element.draw(ctx, area);
+        element2.draw(ctx, area);
       }
     }
     for (i = 0; i < active.length; ++i) {
@@ -3885,8 +3885,8 @@ var DatasetController = class {
     const dataset = this.getDataset();
     let context;
     if (index2 >= 0 && index2 < this._cachedMeta.data.length) {
-      const element = this._cachedMeta.data[index2];
-      context = element.$context || (element.$context = createDataContext(this.getContext(), index2, element));
+      const element2 = this._cachedMeta.data[index2];
+      context = element2.$context || (element2.$context = createDataContext(this.getContext(), index2, element2));
       context.parsed = this.getParsed(index2);
       context.raw = dataset.data[index2];
       context.index = context.dataIndex = index2;
@@ -3976,11 +3976,11 @@ var DatasetController = class {
       includeOptions
     };
   }
-  updateElement(element, index2, properties, mode) {
+  updateElement(element2, index2, properties, mode) {
     if (isDirectUpdateMode(mode)) {
-      Object.assign(element, properties);
+      Object.assign(element2, properties);
     } else {
-      this._resolveAnimations(index2, mode).update(element, properties);
+      this._resolveAnimations(index2, mode).update(element2, properties);
     }
   }
   updateSharedOptions(sharedOptions, mode, newOptions) {
@@ -3988,29 +3988,29 @@ var DatasetController = class {
       this._resolveAnimations(void 0, mode).update(sharedOptions, newOptions);
     }
   }
-  _setStyle(element, index2, mode, active) {
-    element.active = active;
+  _setStyle(element2, index2, mode, active) {
+    element2.active = active;
     const options = this.getStyle(index2, active);
-    this._resolveAnimations(index2, mode, active).update(element, {
+    this._resolveAnimations(index2, mode, active).update(element2, {
       options: !active && this.getSharedOptions(options) || options
     });
   }
-  removeHoverStyle(element, datasetIndex, index2) {
-    this._setStyle(element, index2, "active", false);
+  removeHoverStyle(element2, datasetIndex, index2) {
+    this._setStyle(element2, index2, "active", false);
   }
-  setHoverStyle(element, datasetIndex, index2) {
-    this._setStyle(element, index2, "active", true);
+  setHoverStyle(element2, datasetIndex, index2) {
+    this._setStyle(element2, index2, "active", true);
   }
   _removeDatasetHoverStyle() {
-    const element = this._cachedMeta.dataset;
-    if (element) {
-      this._setStyle(element, void 0, "active", false);
+    const element2 = this._cachedMeta.dataset;
+    if (element2) {
+      this._setStyle(element2, void 0, "active", false);
     }
   }
   _setDatasetHoverStyle() {
-    const element = this._cachedMeta.dataset;
-    if (element) {
-      this._setStyle(element, void 0, "active", true);
+    const element2 = this._cachedMeta.dataset;
+    if (element2) {
+      this._setStyle(element2, void 0, "active", true);
     }
   }
   _resyncElements(resetNewElements) {
@@ -4055,7 +4055,7 @@ var DatasetController = class {
       this.updateElements(data, start, count, "reset");
     }
   }
-  updateElements(element, start, count, mode) {
+  updateElements(element2, start, count, mode) {
   }
   _removeElements(start, count) {
     const meta = this._cachedMeta;
@@ -5249,7 +5249,7 @@ var PolarAreaController = class extends DatasetController {
       min: Number.POSITIVE_INFINITY,
       max: Number.NEGATIVE_INFINITY
     };
-    meta.data.forEach((element, index2) => {
+    meta.data.forEach((element2, index2) => {
       const parsed = this.getParsed(index2).r;
       if (!isNaN(parsed) && this.chart.getDataVisibility(index2)) {
         if (parsed < range.min) {
@@ -5317,7 +5317,7 @@ var PolarAreaController = class extends DatasetController {
   countVisibleElements() {
     const meta = this._cachedMeta;
     let count = 0;
-    meta.data.forEach((element, index2) => {
+    meta.data.forEach((element2, index2) => {
       if (!isNaN(this.getParsed(index2).r) && this.chart.getDataVisibility(index2)) {
         count++;
       }
@@ -5638,9 +5638,9 @@ function evaluateInteractionItems(chart, axis, position, handler, intersect) {
     const { index: index2, data } = metasets[i];
     const { lo, hi } = binarySearch(metasets[i], axis, value, intersect);
     for (let j = lo; j <= hi; ++j) {
-      const element = data[j];
-      if (!element.skip) {
-        handler(element, index2, j);
+      const element2 = data[j];
+      if (!element2.skip) {
+        handler(element2, index2, j);
       }
     }
   }
@@ -5659,13 +5659,13 @@ function getIntersectItems(chart, position, axis, useFinalPosition, includeInvis
   if (!includeInvisible && !chart.isPointInArea(position)) {
     return items;
   }
-  const evaluationFunc = function(element, datasetIndex, index2) {
-    if (!includeInvisible && !_isPointInArea(element, chart.chartArea, 0)) {
+  const evaluationFunc = function(element2, datasetIndex, index2) {
+    if (!includeInvisible && !_isPointInArea(element2, chart.chartArea, 0)) {
       return;
     }
-    if (element.inRange(position.x, position.y, useFinalPosition)) {
+    if (element2.inRange(position.x, position.y, useFinalPosition)) {
       items.push({
-        element,
+        element: element2,
         datasetIndex,
         index: index2
       });
@@ -5676,18 +5676,18 @@ function getIntersectItems(chart, position, axis, useFinalPosition, includeInvis
 }
 function getNearestRadialItems(chart, position, axis, useFinalPosition) {
   let items = [];
-  function evaluationFunc(element, datasetIndex, index2) {
-    const { startAngle, endAngle } = element.getProps([
+  function evaluationFunc(element2, datasetIndex, index2) {
+    const { startAngle, endAngle } = element2.getProps([
       "startAngle",
       "endAngle"
     ], useFinalPosition);
-    const { angle } = getAngleFromPoint(element, {
+    const { angle } = getAngleFromPoint(element2, {
       x: position.x,
       y: position.y
     });
     if (_angleBetween(angle, startAngle, endAngle)) {
       items.push({
-        element,
+        element: element2,
         datasetIndex,
         index: index2
       });
@@ -5700,12 +5700,12 @@ function getNearestCartesianItems(chart, position, axis, intersect, useFinalPosi
   let items = [];
   const distanceMetric = getDistanceMetricForAxis(axis);
   let minDistance = Number.POSITIVE_INFINITY;
-  function evaluationFunc(element, datasetIndex, index2) {
-    const inRange2 = element.inRange(position.x, position.y, useFinalPosition);
+  function evaluationFunc(element2, datasetIndex, index2) {
+    const inRange2 = element2.inRange(position.x, position.y, useFinalPosition);
     if (intersect && !inRange2) {
       return;
     }
-    const center = element.getCenterPoint(useFinalPosition);
+    const center = element2.getCenterPoint(useFinalPosition);
     const pointInArea = !!includeInvisible || chart.isPointInArea(center);
     if (!pointInArea && !inRange2) {
       return;
@@ -5714,7 +5714,7 @@ function getNearestCartesianItems(chart, position, axis, intersect, useFinalPosi
     if (distance < minDistance) {
       items = [
         {
-          element,
+          element: element2,
           datasetIndex,
           index: index2
         }
@@ -5722,7 +5722,7 @@ function getNearestCartesianItems(chart, position, axis, intersect, useFinalPosi
       minDistance = distance;
     } else if (distance === minDistance) {
       items.push({
-        element,
+        element: element2,
         datasetIndex,
         index: index2
       });
@@ -5741,14 +5741,14 @@ function getAxisItems(chart, position, axis, intersect, useFinalPosition) {
   const items = [];
   const rangeMethod = axis === "x" ? "inXRange" : "inYRange";
   let intersectsItem = false;
-  evaluateInteractionItems(chart, axis, position, (element, datasetIndex, index2) => {
-    if (element[rangeMethod] && element[rangeMethod](position[axis], useFinalPosition)) {
+  evaluateInteractionItems(chart, axis, position, (element2, datasetIndex, index2) => {
+    if (element2[rangeMethod] && element2[rangeMethod](position[axis], useFinalPosition)) {
       items.push({
-        element,
+        element: element2,
         datasetIndex,
         index: index2
       });
-      intersectsItem = intersectsItem || element.inRange(position.x, position.y, useFinalPosition);
+      intersectsItem = intersectsItem || element2.inRange(position.x, position.y, useFinalPosition);
     }
   });
   if (intersect && !intersectsItem) {
@@ -5770,10 +5770,10 @@ var Interaction = {
       }
       chart.getSortedVisibleDatasetMetas().forEach((meta) => {
         const index2 = items[0].index;
-        const element = meta.data[index2];
-        if (element && !element.skip) {
+        const element2 = meta.data[index2];
+        if (element2 && !element2.skip) {
           elements2.push({
-            element,
+            element: element2,
             datasetIndex: meta.index,
             index: index2
           });
@@ -6166,9 +6166,9 @@ var BasePlatform = class {
   getDevicePixelRatio() {
     return 1;
   }
-  getMaximumSize(element, width, height, aspectRatio) {
-    width = Math.max(0, width || element.width);
-    height = height || element.height;
+  getMaximumSize(element2, width, height, aspectRatio) {
+    width = Math.max(0, width || element2.width);
+    height = height || element2.height;
     return {
       width,
       height: Math.max(0, aspectRatio ? Math.floor(width / aspectRatio) : height)
@@ -9388,8 +9388,8 @@ var Chart = class {
 function invalidatePlugins() {
   return each(Chart.instances, (chart) => chart._plugins.invalidate());
 }
-function clipSelf(ctx, element, endAngle) {
-  const { startAngle, x, y, outerRadius, innerRadius, options } = element;
+function clipSelf(ctx, element2, endAngle) {
+  const { startAngle, x, y, outerRadius, innerRadius, options } = element2;
   const { borderWidth, borderJoinStyle } = options;
   const outerAngleClip = Math.min(borderWidth / outerRadius, _normalizeAngle(startAngle - endAngle));
   ctx.beginPath();
@@ -9416,8 +9416,8 @@ function clipSelf(ctx, element, endAngle) {
   ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.clip("evenodd");
 }
-function clipArc(ctx, element, endAngle) {
-  const { startAngle, pixelMargin, x, y, outerRadius, innerRadius } = element;
+function clipArc(ctx, element2, endAngle) {
+  const { startAngle, pixelMargin, x, y, outerRadius, innerRadius } = element2;
   let angleMargin = pixelMargin / outerRadius;
   ctx.beginPath();
   ctx.arc(x, y, outerRadius, startAngle - angleMargin, endAngle + angleMargin);
@@ -9459,9 +9459,9 @@ function rThetaToXY(r, theta, x, y) {
     y: y + r * Math.sin(theta)
   };
 }
-function pathArc(ctx, element, offset, spacing, end, circular) {
-  const { x, y, startAngle: start, pixelMargin, innerRadius: innerR } = element;
-  const outerRadius = Math.max(element.outerRadius + spacing + offset - pixelMargin, 0);
+function pathArc(ctx, element2, offset, spacing, end, circular) {
+  const { x, y, startAngle: start, pixelMargin, innerRadius: innerR } = element2;
+  const outerRadius = Math.max(element2.outerRadius + spacing + offset - pixelMargin, 0);
   const innerRadius = innerR > 0 ? innerR + spacing + offset + pixelMargin : 0;
   let spacingOffset = 0;
   const alpha2 = end - start;
@@ -9476,7 +9476,7 @@ function pathArc(ctx, element, offset, spacing, end, circular) {
   const angleOffset = (alpha2 - beta) / 2;
   const startAngle = start + angleOffset + spacingOffset;
   const endAngle = end - angleOffset - spacingOffset;
-  const { outerStart, outerEnd, innerStart, innerEnd } = parseBorderRadius$1(element, innerRadius, outerRadius, endAngle - startAngle);
+  const { outerStart, outerEnd, innerStart, innerEnd } = parseBorderRadius$1(element2, innerRadius, outerRadius, endAngle - startAngle);
   const outerStartAdjustedRadius = outerRadius - outerStart;
   const outerEndAdjustedRadius = outerRadius - outerEnd;
   const outerStartAdjustedAngle = startAngle + outerStart / outerStartAdjustedRadius;
@@ -9524,11 +9524,11 @@ function pathArc(ctx, element, offset, spacing, end, circular) {
   }
   ctx.closePath();
 }
-function drawArc(ctx, element, offset, spacing, circular) {
-  const { fullCircles, startAngle, circumference } = element;
-  let endAngle = element.endAngle;
+function drawArc(ctx, element2, offset, spacing, circular) {
+  const { fullCircles, startAngle, circumference } = element2;
+  let endAngle = element2.endAngle;
   if (fullCircles) {
-    pathArc(ctx, element, offset, spacing, endAngle, circular);
+    pathArc(ctx, element2, offset, spacing, endAngle, circular);
     for (let i = 0; i < fullCircles; ++i) {
       ctx.fill();
     }
@@ -9536,12 +9536,12 @@ function drawArc(ctx, element, offset, spacing, circular) {
       endAngle = startAngle + (circumference % TAU || TAU);
     }
   }
-  pathArc(ctx, element, offset, spacing, endAngle, circular);
+  pathArc(ctx, element2, offset, spacing, endAngle, circular);
   ctx.fill();
   return endAngle;
 }
-function drawBorder(ctx, element, offset, spacing, circular) {
-  const { fullCircles, startAngle, circumference, options } = element;
+function drawBorder(ctx, element2, offset, spacing, circular) {
+  const { fullCircles, startAngle, circumference, options } = element2;
   const { borderWidth, borderJoinStyle, borderDash, borderDashOffset, borderRadius } = options;
   const inner = options.borderAlign === "inner";
   if (!borderWidth) {
@@ -9556,9 +9556,9 @@ function drawBorder(ctx, element, offset, spacing, circular) {
     ctx.lineWidth = borderWidth;
     ctx.lineJoin = borderJoinStyle || "bevel";
   }
-  let endAngle = element.endAngle;
+  let endAngle = element2.endAngle;
   if (fullCircles) {
-    pathArc(ctx, element, offset, spacing, endAngle, circular);
+    pathArc(ctx, element2, offset, spacing, endAngle, circular);
     for (let i = 0; i < fullCircles; ++i) {
       ctx.stroke();
     }
@@ -9567,13 +9567,13 @@ function drawBorder(ctx, element, offset, spacing, circular) {
     }
   }
   if (inner) {
-    clipArc(ctx, element, endAngle);
+    clipArc(ctx, element2, endAngle);
   }
   if (options.selfJoin && endAngle - startAngle >= PI && borderRadius === 0 && borderJoinStyle !== "miter") {
-    clipSelf(ctx, element, endAngle);
+    clipSelf(ctx, element2, endAngle);
   }
   if (!fullCircles) {
-    pathArc(ctx, element, offset, spacing, endAngle, circular);
+    pathArc(ctx, element2, offset, spacing, endAngle, circular);
     ctx.stroke();
   }
 }
@@ -11975,7 +11975,7 @@ function splitNewlines(str) {
   return str;
 }
 function createTooltipItem(chart, item) {
-  const { element, datasetIndex, index: index2 } = item;
+  const { element: element2, datasetIndex, index: index2 } = item;
   const controller = chart.getDatasetMeta(datasetIndex).controller;
   const { label, value } = controller.getLabelAndValue(index2);
   return {
@@ -11987,7 +11987,7 @@ function createTooltipItem(chart, item) {
     dataset: controller.getDataset(),
     dataIndex: index2,
     datasetIndex,
-    element
+    element: element2
   };
 }
 function getTooltipSize(tooltip, options) {
@@ -12324,7 +12324,7 @@ var Tooltip = class extends Element {
       tooltipItems.push(createTooltipItem(this.chart, active[i]));
     }
     if (options.filter) {
-      tooltipItems = tooltipItems.filter((element, index2, array) => options.filter(element, index2, array, data));
+      tooltipItems = tooltipItems.filter((element2, index2, array) => options.filter(element2, index2, array, data));
     }
     if (options.itemSort) {
       tooltipItems = tooltipItems.sort((a, b) => options.itemSort(a, b, data));
@@ -16553,9 +16553,226 @@ function groupAxisTickCallbacks(scales2, primaryId, secondaryId) {
     };
   }
 }
+var CATEGORY_NAMED = /* @__PURE__ */ new Set(["pie", "doughnut", "polarArea"]);
+var HTML_TOOLTIP_OPTIONS = [
+  "backgroundColor",
+  "borderColor",
+  "borderWidth",
+  "cornerRadius",
+  "padding",
+  "titleColor",
+  "titleFont",
+  "titleMarginBottom",
+  "bodyColor",
+  "bodyFont",
+  "displayColors",
+  "boxWidth",
+  "boxHeight"
+];
+function ensureTooltipStyles() {
+  if (document.getElementById("bcjs-tooltip-styles")) return;
+  const font = Chart.defaults.font;
+  const style = document.createElement("style");
+  style.id = "bcjs-tooltip-styles";
+  style.textContent = `
+:where(.bcjs-tooltip) {
+  position: absolute; left: 0; top: 0; z-index: 10; pointer-events: none; opacity: 0;
+  transition: opacity .15s ease; white-space: nowrap; line-height: 1.3;
+  font-family: ${font.family}; font-size: ${font.size}px;
+  background: var(--bcjs-tooltip-bg, rgba(0, 0, 0, 0.8)); color: var(--bcjs-tooltip-color, #fff);
+  border: var(--bcjs-tooltip-border-width, 0) solid var(--bcjs-tooltip-border-color, transparent);
+  border-radius: var(--bcjs-tooltip-radius, 6px); padding: var(--bcjs-tooltip-padding, 6px);
+}
+:where(.bcjs-tooltip-title) { font-weight: bold; margin-bottom: 6px; }
+:where(.bcjs-tooltip-row) { display: flex; align-items: center; gap: 0.4em; }
+:where(.bcjs-tooltip-marker) { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+:where(.bcjs-tooltip-value) { font-weight: bold; }
+`;
+  document.head.append(style);
+}
+function applyHtmlTooltip(config) {
+  const tooltip = config.options?.plugins?.tooltip;
+  const html = tooltip?.bcjsHtml;
+  if (!html) return;
+  delete tooltip.bcjsHtml;
+  if (tooltip.enabled === false) return;
+  const style = {};
+  for (const key of HTML_TOOLTIP_OPTIONS) {
+    if (tooltip[key] !== void 0) style[key] = tooltip[key];
+  }
+  const settings = {
+    html,
+    style,
+    customLabel: !!tooltip.callbacks?.hasLabel,
+    categoryNamed: CATEGORY_NAMED.has(config.type)
+  };
+  settings.showTitle = html.showTitle ?? !settings.categoryNamed;
+  if (html.function) settings.fn = compileTooltipFunction(html.function);
+  ensureTooltipStyles();
+  tooltip.enabled = false;
+  tooltip.external = (context) => renderHtmlTooltip(context, settings);
+}
+var HIDE_TOOLTIP = /* @__PURE__ */ Symbol("hide");
+function escapeHtml(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function compileTooltipFunction(source) {
+  try {
+    const fn = (0, eval)(`'use strict'; (${source})`);
+    if (typeof fn !== "function") throw new TypeError("the code does not evaluate to a function");
+    return fn;
+  } catch (err) {
+    console.error("BCJS: Tooltip.Html.Function could not be compiled, so the built-in tooltip is used. If the page sets a Content Security Policy, its script-src must allow 'unsafe-eval'.", err);
+    return null;
+  }
+}
+function customTooltipContent(chart, tooltip, settings) {
+  let result;
+  try {
+    result = settings.fn({
+      chart,
+      tooltip,
+      dataPoints: tooltip.dataPoints,
+      title: tooltip.title,
+      escape: escapeHtml
+    });
+  } catch (err) {
+    if (!settings.fnFailed) console.error("BCJS: Tooltip.Html.Function threw, so the built-in tooltip is used.", err);
+    settings.fnFailed = true;
+    return void 0;
+  }
+  if (result === null || result === void 0) return HIDE_TOOLTIP;
+  if (typeof result === "string" || typeof result === "number") return String(result);
+  if (typeof result.nodeType === "number") return result;
+  if (!settings.fnFailed) {
+    console.error("BCJS: Tooltip.Html.Function must return a string, a DOM node, or null; the built-in tooltip is used.", result);
+  }
+  settings.fnFailed = true;
+  return void 0;
+}
+function applyFont(el, font) {
+  if (!font) return;
+  if (font.family) el.style.fontFamily = font.family;
+  if (font.size) el.style.fontSize = `${font.size}px`;
+  if (font.style) el.style.fontStyle = font.style;
+  if (font.weight) el.style.fontWeight = font.weight;
+  if (font.lineHeight) el.style.lineHeight = font.lineHeight;
+}
+function element(tag, className, text) {
+  const el = document.createElement(tag);
+  el.className = className;
+  if (text !== void 0) el.textContent = text;
+  return el;
+}
+function htmlTooltipElement(chart) {
+  const container = chart.canvas.parentNode;
+  let el = chart.$bcjsTooltip;
+  if (!el || el.parentNode !== container) {
+    el?.remove();
+    el = element("div", "bcjs-tooltip");
+    el.setAttribute("role", "tooltip");
+    if (getComputedStyle(container).position === "static") container.style.position = "relative";
+    container.append(el);
+    chart.$bcjsTooltip = el;
+  }
+  return el;
+}
+function removeHtmlTooltip(chart) {
+  chart.$bcjsTooltip?.remove();
+  chart.$bcjsTooltip = null;
+}
+function renderHtmlTooltip({ chart, tooltip }, settings) {
+  const el = htmlTooltipElement(chart);
+  if (tooltip.opacity === 0) {
+    el.style.opacity = "0";
+    return;
+  }
+  const { html, style: s } = settings;
+  el.className = html.cssClass ? `bcjs-tooltip ${html.cssClass}` : "bcjs-tooltip";
+  el.style.background = s.backgroundColor ?? "";
+  el.style.borderColor = s.borderColor ?? "";
+  el.style.borderWidth = s.borderWidth !== void 0 ? `${s.borderWidth}px` : "";
+  el.style.borderRadius = typeof s.cornerRadius === "number" ? `${s.cornerRadius}px` : "";
+  if (s.padding !== void 0) {
+    const p = toPadding(s.padding);
+    el.style.padding = `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`;
+  } else {
+    el.style.padding = "";
+  }
+  const content = settings.fn ? customTooltipContent(chart, tooltip, settings) : void 0;
+  if (content === HIDE_TOOLTIP) {
+    el.style.opacity = "0";
+    return;
+  }
+  if (typeof content === "string") el.innerHTML = content;
+  else if (content) el.replaceChildren(content);
+  else el.replaceChildren(...builtInTooltipContent(tooltip, settings));
+  el.style.opacity = "1";
+  positionHtmlTooltip(chart, tooltip, el);
+}
+function builtInTooltipContent(tooltip, settings) {
+  const { html, style: s } = settings;
+  const children = [];
+  if (settings.showTitle && tooltip.title?.length) {
+    const title = element("div", "bcjs-tooltip-title", tooltip.title.join(" "));
+    if (s.titleColor) title.style.color = s.titleColor;
+    if (s.titleMarginBottom !== void 0) title.style.marginBottom = `${s.titleMarginBottom}px`;
+    applyFont(title, s.titleFont);
+    children.push(title);
+  }
+  tooltip.dataPoints.forEach((point, i) => {
+    const row = element("div", "bcjs-tooltip-row");
+    if (s.bodyColor) row.style.color = s.bodyColor;
+    if (s.displayColors !== false) {
+      const marker = element("span", "bcjs-tooltip-marker");
+      const colors2 = tooltip.labelColors[i] ?? {};
+      marker.style.background = colors2.backgroundColor ? `linear-gradient(${colors2.backgroundColor}, ${colors2.backgroundColor}), #fff` : "";
+      marker.style.border = typeof colors2.borderColor === "string" ? `1px solid ${colors2.borderColor}` : "";
+      if (s.boxWidth !== void 0) marker.style.width = `${s.boxWidth}px`;
+      if (s.boxHeight !== void 0) marker.style.height = `${s.boxHeight}px`;
+      row.append(marker);
+    }
+    if (settings.customLabel) {
+      const text = element("span", "bcjs-tooltip-text", (tooltip.body[i]?.lines ?? []).join(" "));
+      applyFont(text, s.bodyFont);
+      row.append(text);
+    } else {
+      const name = settings.categoryNamed ? point.label : point.dataset.label || point.label;
+      if (name) {
+        const label = element("span", "bcjs-tooltip-label", name + (html.separator ?? ":"));
+        applyFont(label, s.bodyFont);
+        applyFont(label, html.labelFont);
+        row.append(label);
+      }
+      const value = element("span", "bcjs-tooltip-value", point.formattedValue);
+      applyFont(value, s.bodyFont);
+      applyFont(value, html.valueFont);
+      row.append(value);
+    }
+    children.push(row);
+  });
+  return children;
+}
+function positionHtmlTooltip(chart, tooltip, el) {
+  const container = el.parentNode;
+  const gap = 8;
+  const x = chart.canvas.offsetLeft + tooltip.caretX;
+  const y = chart.canvas.offsetTop + tooltip.caretY;
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
+  let left = x - w / 2;
+  let top = y - h - gap;
+  if (top < 0) top = y + gap;
+  left = Math.min(Math.max(left, 0), Math.max(container.clientWidth - w, 0));
+  top = Math.min(Math.max(top, 0), Math.max(container.clientHeight - h, 0));
+  el.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+}
 function wireCallbacks(config, dotNetRef, getChart2) {
+  for (const dataset of config.data?.datasets ?? []) applyLabelFormat(dataset.datalabels);
   const options = config.options;
   if (!options) return;
+  applyLabelFormat(options.plugins?.datalabels);
+  applyHtmlTooltip(config);
   if (options.plugins?.legend?.labels?.hasFilter) {
     delete options.plugins.legend.labels.hasFilter;
     options.plugins.legend.labels.filter = (item, data) => {
@@ -16620,32 +16837,84 @@ function wireCallbacks(config, dotNetRef, getChart2) {
     dotNetRef.invokeMethodAsync("OnLegendClickCallback", { LegendIndex: item.index ?? item.datasetIndex, LegendText: item.text });
   };
 }
+function applyLabelFormat(labels) {
+  const format = labels?.bcjsFormat;
+  if (!format) return;
+  delete labels.bcjsFormat;
+  labels.formatter = (value, ctx) => formatLabel(value, ctx, format);
+}
+function formatLabel(value, ctx, format) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return plugin.defaults.formatter(value, ctx);
+  }
+  let n = value;
+  if (format.percentage) {
+    let total = 0;
+    ctx.dataset.data.forEach((v, i) => {
+      if (typeof v === "number" && Number.isFinite(v) && ctx.chart.getDataVisibility(i)) total += v;
+    });
+    n = total === 0 ? 0 : value / total * 100;
+  }
+  const text = Number.isInteger(format.decimals) ? n.toFixed(format.decimals) : String(n);
+  return (format.prefix ?? "") + text + (format.suffix ?? "");
+}
+function usesDataLabels(config) {
+  return !!config.options?.registerDataLabels;
+}
 var registeredPlugins = /* @__PURE__ */ new Set();
 function ensurePlugins(config) {
   const options = config.options ?? {};
-  if (options.registerDataLabels && !registeredPlugins.has("datalabels")) {
-    Chart.register(plugin);
-    registeredPlugins.add("datalabels");
-  }
   if (options.plugins?.zoom && !registeredPlugins.has("zoom")) {
     Chart.register(plugin2);
     registeredPlugins.add("zoom");
   }
 }
-function buildChart(canvasId, dotNetRef, config) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return null;
+function takeCrosshair(config) {
   const crosshair = config.options?.plugins?.crosshair;
   if (config.options?.plugins) delete config.options.plugins.crosshair;
-  wireCallbacks(config, dotNetRef, () => Chart.getChart(canvasId));
-  const chart = new Chart(canvas.getContext("2d"), config);
+  return crosshair;
+}
+function setCrosshair(chart, canvasId, crosshair) {
+  if (chart.$bcjsCrosshair) {
+    chart.canvas.removeEventListener("mousemove", chart.$bcjsCrosshair);
+    chart.$bcjsCrosshair = null;
+    crosshairs.delete(canvasId);
+  }
   if (crosshair) {
     crosshairs.set(canvasId, crosshair);
     const handler = (evt) => drawCrosshair(chart, evt, crosshair);
     chart.$bcjsCrosshair = handler;
-    canvas.addEventListener("mousemove", handler);
+    chart.canvas.addEventListener("mousemove", handler);
   }
+}
+function buildChart(canvasId, dotNetRef, config) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const crosshair = takeCrosshair(config);
+  const dataLabels = usesDataLabels(config);
+  if (dataLabels) config.plugins = [plugin];
+  wireCallbacks(config, dotNetRef, () => Chart.getChart(canvasId));
+  const chart = new Chart(canvas.getContext("2d"), config);
+  chart.$bcjsDataLabels = dataLabels;
+  setCrosshair(chart, canvasId, crosshair);
   return chart;
+}
+function applyData(target, source) {
+  target.labels = source.labels ?? [];
+  const next = source.datasets ?? [];
+  const current = target.datasets ?? (target.datasets = []);
+  next.forEach((dataset, i) => {
+    const existing = current[i];
+    if (!existing) {
+      current.push(dataset);
+      return;
+    }
+    for (const key of Object.keys(existing)) {
+      if (!(key in dataset)) delete existing[key];
+    }
+    Object.assign(existing, dataset);
+  });
+  current.length = next.length;
 }
 function parseConfig(jsonConfig) {
   return typeof jsonConfig === "string" ? JSON.parse(jsonConfig) : jsonConfig;
@@ -16657,10 +16926,21 @@ async function create(canvasId, dotNetRef, jsonConfig) {
   buildChart(canvasId, dotNetRef, config);
 }
 async function update(canvasId, dotNetRef, jsonConfig) {
-  destroy(canvasId);
   const config = parseConfig(jsonConfig);
   ensurePlugins(config);
-  buildChart(canvasId, dotNetRef, config);
+  const chart = Chart.getChart(canvasId);
+  if (!chart || chart.config.type !== config.type || chart.$bcjsDataLabels !== usesDataLabels(config)) {
+    destroy(canvasId);
+    buildChart(canvasId, dotNetRef, config);
+    return;
+  }
+  const crosshair = takeCrosshair(config);
+  wireCallbacks(config, dotNetRef, () => chart);
+  if (!config.options?.plugins?.tooltip?.external) removeHtmlTooltip(chart);
+  applyData(chart.data, config.data ?? {});
+  chart.options = config.options ?? {};
+  setCrosshair(chart, canvasId, crosshair);
+  chart.update();
 }
 function addData(canvasId, label, datasetIndex, value) {
   const chart = Chart.getChart(canvasId);
@@ -16687,10 +16967,8 @@ function clearData(canvasId) {
 function destroy(canvasId) {
   const chart = Chart.getChart(canvasId);
   if (!chart) return;
-  if (chart.$bcjsCrosshair) {
-    chart.canvas.removeEventListener("mousemove", chart.$bcjsCrosshair);
-  }
-  crosshairs.delete(canvasId);
+  setCrosshair(chart, canvasId, null);
+  removeHtmlTooltip(chart);
   chart.destroy();
 }
 export {
