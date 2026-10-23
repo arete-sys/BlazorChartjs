@@ -93,4 +93,43 @@ public class ChartComponentTests
         Assert.Contains("my-chart", container.ClassList);
         Assert.Contains("height:300px", container.GetAttribute("style"));
     }
+
+    [Fact]
+    public void Canvas_sits_in_its_own_box_inside_the_container()
+    {
+        using var ctx = CreateContext(out _);
+
+        var cut = ctx.Render<Chart>(p => p.Add(c => c.Config, SampleConfig()));
+
+        Assert.NotNull(cut.Find("div.bcjs-chart-container > div.bcjs-chart-canvas > canvas"));
+    }
+
+    [Fact]
+    public void AriaLabel_makes_the_canvas_a_labelled_image()
+    {
+        using var ctx = CreateContext(out _);
+
+        var unlabelled = ctx.Render<Chart>(p => p.Add(c => c.Config, SampleConfig())).Find("canvas");
+        Assert.False(unlabelled.HasAttribute("role"));
+        Assert.False(unlabelled.HasAttribute("aria-label"));
+
+        var labelled = ctx.Render<Chart>(p => p
+            .Add(c => c.Config, SampleConfig())
+            .Add(c => c.AriaLabel, "Notes per month")).Find("canvas");
+        Assert.Equal("img", labelled.GetAttribute("role"));
+        Assert.Equal("Notes per month", labelled.GetAttribute("aria-label"));
+    }
+
+    [Fact]
+    public async Task ToBase64ImageAsync_calls_the_module_with_the_canvas_and_options()
+    {
+        using var ctx = CreateContext(out var module);
+        var config = SampleConfig();
+        var cut = ctx.Render<Chart>(p => p.Add(c => c.Config, config));
+
+        await cut.InvokeAsync(() => cut.Instance.ToBase64ImageAsync("image/jpeg", 0.9, "#fff"));
+
+        var invocation = Assert.Single(module.Invocations["toBase64Image"]);
+        Assert.Equal([config.CanvasId, "image/jpeg", 0.9, "#fff"], invocation.Arguments);
+    }
 }

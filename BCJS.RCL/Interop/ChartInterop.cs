@@ -67,6 +67,13 @@ public sealed class ChartInterop : IAsyncDisposable
         await module.InvokeVoidAsync("clearData", canvasId);
     }
 
+    /// <summary>Returns the chart as an image data URL, or <see langword="null"/> if it has not been drawn.</summary>
+    public async ValueTask<string?> ToBase64ImageAsync(string canvasId, string type, double? quality, string? backgroundColor)
+    {
+        var module = await _module.Value;
+        return await module.InvokeAsync<string?>("toBase64Image", canvasId, type, quality, backgroundColor);
+    }
+
     /// <summary>Destroys the chart instance.</summary>
     public async ValueTask DestroyAsync(string canvasId)
     {

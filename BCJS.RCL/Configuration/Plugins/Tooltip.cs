@@ -11,6 +11,14 @@ public sealed class Tooltip
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public HtmlTooltip? Html { get; set; }
 
+    /// <summary>
+    /// Number format for the values in the tooltip (canvas or HTML), applied in the browser so it works on
+    /// Blazor Server. Ignored where <see cref="Callbacks"/> sets the label text.
+    /// </summary>
+    [JsonPropertyName("bcjsFormat")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public ValueFormat? Format { get; set; }
+
     /// <summary>Tooltip callbacks (title/label formatting).</summary>
     [JsonPropertyName("callbacks")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

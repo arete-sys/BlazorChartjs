@@ -77,6 +77,36 @@ public class LineDataset : Dataset
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? PointRadius { get; set; }
 
+    /// <summary>Point radius while hovered.</summary>
+    [JsonPropertyName("pointHoverRadius")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? PointHoverRadius { get; set; }
+
+    /// <summary>Extra radius around each point that still counts as hovering it.</summary>
+    [JsonPropertyName("pointHitRadius")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? PointHitRadius { get; set; }
+
+    /// <summary>Point fill color.</summary>
+    [JsonPropertyName("pointBackgroundColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PointBackgroundColor { get; set; }
+
+    /// <summary>Point border color.</summary>
+    [JsonPropertyName("pointBorderColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? PointBorderColor { get; set; }
+
+    /// <summary>Line dash pattern, e.g. <c>[6, 4]</c> for a forecast or target line.</summary>
+    [JsonPropertyName("borderDash")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<int>? BorderDash { get; set; }
+
+    /// <summary>Whether the line is drawn across <see langword="null"/> values instead of breaking.</summary>
+    [JsonPropertyName("spanGaps")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? SpanGaps { get; set; }
+
     /// <summary>Point marker style (see <see cref="Enums.PointStyle"/>).</summary>
     [JsonPropertyName("pointStyle")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

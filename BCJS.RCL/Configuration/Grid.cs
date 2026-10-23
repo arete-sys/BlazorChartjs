@@ -13,7 +13,12 @@ public class Grid
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Display { get; set; }
 
-    /// <summary>Whether the axis border is drawn.</summary>
+    /// <summary>Grid line width in pixels.</summary>
+    [JsonPropertyName("lineWidth")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? LineWidth { get; set; }
+
+    /// <summary>Whether the axis border is drawn. Chart.js 3 only, ignored by Chart.js 4: use <see cref="Axis.Border"/>.</summary>
     [JsonPropertyName("drawBorder")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? DrawBorder { get; set; }

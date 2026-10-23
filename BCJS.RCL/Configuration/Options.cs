@@ -98,6 +98,16 @@ public class Options : IOptions
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Interaction? Interaction { get; set; }
 
+    /// <summary>Chart layout (padding around the chart area).</summary>
+    [JsonPropertyName("layout")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public Layout? Layout { get; set; }
+
+    /// <summary>Locale for numbers in tooltips and formats (e.g. <c>"en-GB"</c>). Unset: the browser's.</summary>
+    [JsonPropertyName("locale")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Locale { get; set; }
+
     /// <summary>Whether the chart maintains its original aspect ratio when resizing.</summary>
     [JsonPropertyName("maintainAspectRatio")]
     public bool MaintainAspectRatio { get; set; }

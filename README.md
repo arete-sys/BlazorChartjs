@@ -77,6 +77,7 @@ builder.Services.AddBcjs();
 | `Config` | `IChartConfig` | **Required.** `BarChartConfig`, `LineChartConfig`, `PieChartConfig`, … |
 | `Height` / `Width` | `string?` | CSS sizing for the container. |
 | `Class` / `Style` | `string?` | Extra class / inline style on the container. |
+| `AriaLabel` | `string?` | Accessible name: the canvas becomes `role="img"` with this label. |
 | `OnChartClick` | `EventCallback<CallbackGenericContext>` | Raised when a data element is clicked. |
 | `OnChartOver` | `EventCallback<HoverContext>` | Raised when the chart is hovered. |
 | `OnLegendClick` | `EventCallback<LegendClickContext>` | Raised when a legend item is clicked. |
@@ -88,7 +89,15 @@ await chart.AddDataAsync(labels, datasetIndex, data); // append label/value pair
 await chart.AddDatasetAsync(dataset);                 // append a new dataset
 await chart.ClearDataAsync();                          // clear labels + data
 await chart.UpdateAsync();                             // push the current Config to the chart
+var png = await chart.ToBase64ImageAsync(backgroundColor: "#fff"); // "data:image/png;base64,…"
 ```
+
+`ToBase64ImageAsync(type, quality, backgroundColor)` returns the canvas as an image data URL (`null` before
+the chart is drawn). The canvas is transparent unless `backgroundColor` is given. An HTML legend or tooltip
+is not part of the canvas, so it is not in the image.
+
+The canvas sits in its own `div.bcjs-chart-canvas` inside the container, which is what lets an
+[HTML legend](#html-legend) sit beside it.
 
 The chart is created on first render, updated when `Config` is replaced, and destroyed when the
 component is disposed.
@@ -142,7 +151,7 @@ _config.Options = new Options
 | `UpdateAsync()` in-place updates | ✅ | ✅ |
 | `OnClickAsync`, `OnHoverAsync`, `OnLegendClick` (async) | ✅ | ✅ |
 | `Tooltip.Callbacks`, tick callbacks, legend filter (sync .NET) | ❌ | ✅ |
-| `DataLabels.Format`, `Tooltip.Html`, `HtmlTooltip.Function` (run in the browser) | ✅ | ✅ |
+| `DataLabels.Format`, `Ticks.Format`, `Tooltip.Format`, `Tooltip.Html`, `HtmlTooltip.Function`, `Legend.Html` (run in the browser) | ✅ | ✅ |
 
 ## Tooltips
 
@@ -356,9 +365,58 @@ Legend = new Legend
 },
 ```
 
+Clicking a legend item hides or shows its series (or slice, on pie, doughnut and polar area charts), as
+in Chart.js; `OnLegendClick` is raised as well.
+
+### HTML legend
+
+Set `Legend.Html` to list the legend as HTML beside the chart instead of drawing it on the canvas. Its text
+is as sharp as the rest of the page, a long list scrolls instead of splitting into columns, and CSS can
+theme it.
+
+```csharp
+Legend = new Legend
+{
+    Html = new HtmlLegend(),
+    Position = LegendPosition.Right,
+    Labels = new LegendLabels { UsePointStyle = true, PointStyle = PointStyle.Circle, BoxHeight = 12, Font = new Font { Size = 14 } },
+},
+```
+
+- **Layout** follows `Legend.Position` (`Right` and `Left` beside the chart, `Top` and `Bottom` above or
+  below it and wrapping) and `Legend.Align` (`Start`, `Center`, `End`). The canvas shrinks to make room.
+- **Items** are Chart.js's own legend items, so `Legend.Reverse` and the legend filter apply.
+- **Markers** come from `Labels`: round with `UsePointStyle` and `PointStyle.Circle`, rounded with
+  `PointStyle.RectRounded`, square otherwise; `BoxWidth`/`BoxHeight` set their size.
+- **Text** takes `Labels.Font`, `Labels.Color` and `Labels.Padding` (the gap between items).
+- **Click** or **Enter/Space** on a focused item hides or shows its series or slice; **hover** highlights it.
+  Items are `role="button"` with `aria-pressed`.
+
+| `HtmlLegend` | Purpose |
+|---|---|
+| `CssClass` | Extra class(es) on the list, e.g. `"dark"`. |
+
+```html
+<div class="bcjs-chart-container" data-bcjs-legend="right">
+  <div class="bcjs-chart-canvas"><canvas></canvas></div>
+  <ul class="bcjs-legend [CssClass]">
+    <li class="bcjs-legend-item [bcjs-legend-item-hidden]" role="button" tabindex="0" aria-pressed="true">
+      <span class="bcjs-legend-marker [bcjs-legend-marker-circle]"></span>
+      <span class="bcjs-legend-text">Banks</span>
+    </li>
+  </ul>
+</div>
+```
+
+Like the HTML tooltip, its default styles have zero specificity and read CSS variables, so it can follow
+the page's theme with no C#: `--bcjs-legend-color`, `--bcjs-legend-font-size`, `--bcjs-legend-gap`,
+`--bcjs-legend-marker-size` and `--bcjs-legend-hidden-opacity`. Options set in C# (`Labels.Color`,
+`Labels.Font`, …) are inline styles and win over CSS, so leave `Labels.Color` unset to theme the text
+from CSS.
+
 ### Light and dark themes
 
-The legend, axes and data labels are drawn on the canvas, so they don't follow your page's CSS; their
+The canvas legend, axes and data labels are drawn on the canvas, so they don't follow your page's CSS; their
 colors come from the config. On a theme change, set the colors and call `UpdateAsync()`; the chart is
 updated in place:
 
@@ -370,8 +428,8 @@ private async Task SetThemeAsync(bool dark)
 }
 ```
 
-The HTML tooltip is the exception: it can be themed with CSS alone (see
-[Theming the HTML tooltip](#theming-the-html-tooltip)).
+The HTML tooltip and the HTML legend are the exceptions: they can be themed with CSS alone (see
+[Theming the HTML tooltip](#theming-the-html-tooltip) and [HTML legend](#html-legend)).
 
 ## Data labels
 
@@ -386,6 +444,12 @@ WebAssembly). It applies to numeric values.
 | `Percentage` | Show the value as a percentage of the dataset total (visible items only). |
 | `Decimals` | Digits after the decimal point (unset: the number as-is). |
 | `Prefix` / `Suffix` | Text before / after the number, e.g. `"$"` or `"%"`. |
+| `Compact` | Shorten large numbers in the chart's locale: `12500` → `12.5K`. |
+| `UseGrouping` | Separate thousands in the chart's locale: `12500` → `12,500`. |
+| `MinPercentage` | Hide the label of any item below this share of the visible total, e.g. `2.78` for slices under 10° (ApexCharts' `minAngleToShowLabel`). |
+
+`DataLabelsFormat` is a `ValueFormat` (all but `MinPercentage`), which also formats
+[axes and tooltips](#number-formats).
 
 White percentage labels with a soft shadow, near the outer edge of each slice:
 
@@ -406,14 +470,76 @@ DataLabels = new DataLabels
 > `DataLabels` has a few non-nullable numeric options (`Offset`, `Opacity`, `BorderRadius`, …) that are
 > omitted when 0, so they cannot be set to 0 explicitly (the plugin's default applies instead).
 
+## Number formats
+
+`ValueFormat` formats numbers in the browser, so it works on Blazor Server, where .NET tick and tooltip
+callbacks cannot run. The locale is `Options.Locale` (e.g. `"en-GB"`), or the browser's when unset.
+
+| Where | Option | Notes |
+|---|---|---|
+| Axis labels | `Ticks.Format` | Numeric axes only; a category axis keeps its labels. `Percentage` is ignored. |
+| Tooltip values | `Tooltip.Format` | Canvas and HTML tooltip. Ignored where `Tooltip.Callbacks` sets the label. |
+| Data labels | `DataLabels.Format` | See [Data labels](#data-labels). |
+
+```csharp
+Scales = new Dictionary<string, Axis>
+{
+    ["y"] = new() { Ticks = new Ticks { Format = new ValueFormat { Prefix = "$", Compact = true }, Precision = 0 } }, // "$12K"
+},
+Plugins = new Plugins
+{
+    Tooltip = new Tooltip { Format = new ValueFormat { Prefix = "$", Suffix = "M", UseGrouping = true } },     // "$12,500M"
+},
+```
+
+## Axes, datasets and layout
+
+Chart.js 4 options beyond the basics, each left out of the JSON when unset:
+
+| Class | Options |
+|---|---|
+| `Axis` | `Border` (`AxisBorder`: `Display`, `Color`, `Width`, `Dash`), `Grace` (`"5%"`), `Reverse` |
+| `Ticks` | `Precision` (`0` keeps a count axis to whole numbers), `Padding`, `Display`, `Format` |
+| `Grid` | `LineWidth` (`DrawBorder` is Chart.js 3 only: use `Axis.Border`) |
+| `BarDataset` | `BorderRadius`, `MaxBarThickness`, `BarPercentage`, `CategoryPercentage`, `HoverBorderColor` |
+| `LineDataset` | `PointHoverRadius`, `PointHitRadius`, `PointBackgroundColor`, `PointBorderColor`, `BorderDash`, `SpanGaps` |
+| `PieDataset`, `DoughnutDataset` | `BorderColor`, `HoverBackgroundColor`, `HoverBorderColor` |
+| `Options` | `Layout` (`Padding` around the chart area), `Locale` |
+
+## Time axes
+
+BCJS bundles the Chart.js date-fns adapter, so time axes need no extra script:
+
+```csharp
+_config.Data.Labels = ["2025-01-01", "2025-02-01", "2025-03-01"]; // ISO dates (or Unix milliseconds)
+Scales = new Dictionary<string, Axis>
+{
+    ["x"] = new()
+    {
+        Type = ScaleType.Time,              // spaced by real time; ScaleType.TimeSeries = one slot per point
+        Time = new AxesTime
+        {
+            Unit = TimeUnit.Month,
+            TooltipFormat = "MMMM yyyy",
+            DisplayFormats = new AxesTimeFormats { Month = "MMM yy" },
+        },
+        Ticks = new Ticks { Source = "data" }, // a tick per data point instead of evenly spaced
+    },
+},
+```
+
+Formats are [date-fns tokens](https://date-fns.org/docs/format) (`yyyy`, `MMM`, `d`, `HH:mm`).
+`AxesTime.Parser` reads date strings that are not ISO 8601, e.g. `"dd/MM/yyyy"`. Dates are shown in the
+browser's time zone.
+
 ## Plugins
 
 All chart types, mixed charts, callbacks, crosshair, grouped axes, and animations are implemented.
 The **zoom** and **data-labels** plugins are vendored as isolated ES modules and loaded on demand:
 
 - **Data labels** — see [Data labels](#data-labels).
-- **Zoom / pan** — configure `Options.Plugins.Zoom`. Wheel and drag zoom work out of the box; touch
-  pinch/pan needs a real Hammer build (BCJS ships a no-op stub to keep the module isolated).
+- **Zoom / pan** — configure `Options.Plugins.Zoom`. Wheel, drag, and on touch screens pinch and pan
+  (Hammer.js is bundled, without a `window.Hammer` global).
 
 ## Example: a dashboard pie
 
@@ -476,6 +602,24 @@ Blazor Server and WebAssembly. `BCJS.Sample`'s **Dashboard pie** page adds a lig
     }
 }
 ```
+
+## Debugging the bundle
+
+`chart-interop.js` is minified and ships without a source map. To step through readable code, rebuild the
+map from your version's release tag (`v<version>`). The build is deterministic, so the map matches the
+file your app loads:
+
+```bash
+git clone https://github.com/arete-sys/BlazorChartjs && cd BlazorChartjs
+git checkout v1.3.0          # your BCJS version
+cd BCJS.RCL
+npx esbuild@0.27.0 js/chart-interop.src.js --bundle --format=esm --platform=browser --minify --sourcemap=external --outfile=../artifacts/sourcemap/chart-interop.js
+```
+
+The `chart-interop.js` written next to the map is identical to the shipped one. In Chrome or Edge
+DevTools, open `_content/BCJS/chart-interop.js` in **Sources**, right-click in the code and choose
+**Add source map…**, then give the map's URL (serving the folder with any local web server works). The
+readable sources (`chart-interop.src.js` and the vendored libraries) then appear under the bundle.
 
 ## Credits
 

@@ -41,7 +41,8 @@ A prior session added the **zoom + data-labels plugins** and attempted browser v
    (registered conditionally in `ensurePlugins`).
    - Regenerate the bundle after editing the source:
      ```
-     npx esbuild BCJS.RCL/js/chart-interop.src.js --bundle --format=esm --platform=browser --outfile=BCJS.RCL/wwwroot/chart-interop.js
+     cd BCJS.RCL
+     npx esbuild@0.27.0 js/chart-interop.src.js --bundle --format=esm --platform=browser --minify --outfile=wwwroot/chart-interop.js
      ```
 4. **`ChartInterop.cs`**: module import path is now `./_content/BCJS/chart-interop.js?v=1.0.0` — the
    version query keeps it out of the net10 fingerprint **import map** (which rewrote the URL to a

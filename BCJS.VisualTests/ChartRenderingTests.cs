@@ -24,7 +24,7 @@ public sealed class ChartRenderingTests : IClassFixture<SampleServerFixture>, IA
         """;
 
     private static readonly string[] AllRoutes =
-        ["/line", "/bar", "/pie-doughnut", "/radar", "/mixed", "/zoom", "/datalabels", "/dashboard-pie", "/data-update", "/custom-tooltip"];
+        ["/line", "/bar", "/pie-doughnut", "/radar", "/mixed", "/zoom", "/datalabels", "/dashboard-pie", "/data-update", "/custom-tooltip", "/html-legend", "/time-axis"];
 
     // Chart.js replaces the canvas's "$chartjs" expando when a chart is re-created: same object = updated in place.
     private const string SnapshotCanvases = """
@@ -82,6 +82,30 @@ public sealed class ChartRenderingTests : IClassFixture<SampleServerFixture>, IA
         """;
 
     private readonly SampleServerFixture _fixture;
+
+    private const string ReadHtmlLegend = """
+        (i) => {
+            const container = document.querySelectorAll('canvas')[i].closest('.bcjs-chart-container');
+            const list = container.querySelector('.bcjs-legend');
+            if (!list) return JSON.stringify({ found: false, position: container.dataset.bcjsLegend ?? '' });
+            const items = [...list.querySelectorAll('.bcjs-legend-item')];
+            return JSON.stringify({
+                found: true,
+                position: container.dataset.bcjsLegend ?? '',
+                lefts: items.map(li => Math.round(li.getBoundingClientRect().left)),
+                items: items.map(li => ({
+                    text: li.textContent,
+                    pressed: li.getAttribute('aria-pressed'),
+                    hidden: li.classList.contains('bcjs-legend-item-hidden'),
+                    radius: getComputedStyle(li.querySelector('.bcjs-legend-marker')).borderRadius,
+                    fontSize: getComputedStyle(li).fontSize,
+                })),
+                canvasWidth: container.querySelector('canvas').getBoundingClientRect().width,
+                containerWidth: container.getBoundingClientRect().width,
+            });
+        }
+        """;
+
     private readonly List<string> _errors = new();
     private IBrowserContext _context = default!;
     private IPage _page = default!;
@@ -285,6 +309,86 @@ public sealed class ChartRenderingTests : IClassFixture<SampleServerFixture>, IA
 
         Assert.True(_errors.Count == 0,
             $"console/page errors on /custom-tooltip:{Environment.NewLine}{string.Join(Environment.NewLine, _errors)}");
+    }
+
+    [Fact]
+    public async Task Html_legend_lists_toggles_and_highlights()
+    {
+        await _page.GotoAsync(_fixture.BaseUrl + "/html-legend", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+            Timeout = 60_000,
+        });
+        await _page.WaitForSelectorAsync(".bcjs-legend-item", new PageWaitForSelectorOptions { Timeout = 30_000 });
+        await _page.WaitForTimeoutAsync(2_000);
+
+        var pie = await ReadLegendAsync(0);
+        Assert.True(pie.GetProperty("found").GetBoolean());
+        Assert.Equal("right", pie.GetProperty("position").GetString());
+        var items = pie.GetProperty("items").EnumerateArray().ToList();
+        Assert.Equal(["> $100bn", "$50bn-$100bn", "$25bn-$50bn", "$10bn-$25bn", "$5bn-$10bn", "< $5bn"],
+            items.Select(i => i.GetProperty("text").GetString()));
+        Assert.All(items, i => Assert.Equal("true", i.GetProperty("pressed").GetString()));
+        Assert.All(items, i => Assert.Equal("50%", i.GetProperty("radius").GetString()));
+        Assert.All(items, i => Assert.Equal("14px", i.GetProperty("fontSize").GetString()));
+        Assert.Single(pie.GetProperty("lefts").EnumerateArray().Select(l => l.GetInt32()).Distinct()); // one column
+        Assert.True(pie.GetProperty("canvasWidth").GetDouble() < pie.GetProperty("containerWidth").GetDouble() - 50,
+            "the canvas did not make room for the legend");
+        await _page.Locator(".dashboard-card").ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("html-legend-pie") });
+
+        // Hovering an item lights up its slice.
+        await _page.EvaluateAsync<int>(SnapshotCanvases);
+        await _page.Locator(".bcjs-legend-item").Nth(5).HoverAsync();
+        await _page.WaitForTimeoutAsync(800);
+        Assert.True((await _page.EvaluateAsync<bool[][]>(CompareWithSnapshot))[0][1], "hovering a legend item did not highlight its slice");
+        await _page.Locator(".dashboard-card").ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("html-legend-pie-hover") });
+        await _page.Mouse.MoveAsync(0, 0);
+        await _page.WaitForTimeoutAsync(800);
+
+        // Clicking hides the slice; Enter on the focused item shows it again.
+        await _page.EvaluateAsync<int>(SnapshotCanvases);
+        await _page.Locator(".bcjs-legend-item").Nth(5).ClickAsync();
+        await _page.Mouse.MoveAsync(0, 0);
+        await _page.WaitForTimeoutAsync(1_200);
+        var hidden = (await ReadLegendAsync(0)).GetProperty("items")[5];
+        Assert.True(hidden.GetProperty("hidden").GetBoolean());
+        Assert.Equal("false", hidden.GetProperty("pressed").GetString());
+        var afterClick = (await _page.EvaluateAsync<bool[][]>(CompareWithSnapshot))[0];
+        Assert.True(afterClick[0], "the chart was re-created by a legend click");
+        Assert.True(afterClick[1], "the canvas did not redraw after a legend click");
+        await _page.Locator(".dashboard-card").ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("html-legend-pie-hidden") });
+
+        await _page.Locator(".bcjs-legend-item").Nth(5).FocusAsync();
+        await _page.Keyboard.PressAsync("Enter");
+        await _page.WaitForTimeoutAsync(1_200);
+        Assert.False((await ReadLegendAsync(0)).GetProperty("items")[5].GetProperty("hidden").GetBoolean());
+
+        // The bar chart's legend sits below it, and its tooltip formats values in the browser.
+        var bar = await ReadLegendAsync(1);
+        Assert.Equal("bottom", bar.GetProperty("position").GetString());
+        Assert.Equal(["2025", "2026"], bar.GetProperty("items").EnumerateArray().Select(i => i.GetProperty("text").GetString()));
+        Assert.All(bar.GetProperty("items").EnumerateArray(), i => Assert.NotEqual("50%", i.GetProperty("radius").GetString()));
+
+        var box = await _page.Locator("canvas").Nth(1).BoundingBoxAsync();
+        Assert.NotNull(box);
+        await _page.Mouse.MoveAsync(box.X + box.Width * 0.13f, box.Y + box.Height * 0.6f);
+        await _page.WaitForTimeoutAsync(800);
+        var tip = await ReadTooltipAsync(1);
+        Assert.Equal("1", tip.GetProperty("opacity").GetString());
+        var values = tip.GetProperty("rows").EnumerateArray().Select(r => r.GetProperty("value").GetString()).ToList();
+        Assert.Contains("$12,500M", values);
+        Assert.Contains("$14,200M", values);
+        await _page.Locator("canvas").Nth(1).Locator("xpath=ancestor::div[contains(@class,'bcjs-chart-container')]")
+            .ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("html-legend-bar-tooltip") });
+
+        Assert.True(_errors.Count == 0,
+            $"console/page errors on /html-legend:{Environment.NewLine}{string.Join(Environment.NewLine, _errors)}");
+    }
+
+    private async Task<JsonElement> ReadLegendAsync(int canvasIndex)
+    {
+        var json = await _page.EvaluateAsync<string>(ReadHtmlLegend, canvasIndex);
+        return JsonDocument.Parse(json).RootElement.Clone();
     }
 
     private async Task<JsonElement> ReadContentAsync(int canvasIndex)

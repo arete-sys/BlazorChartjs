@@ -41,10 +41,16 @@ stable path `_content/BCJS/chart-interop.js`, loaded lazily via `import()`, with
 `BCJS.RCL/js/` (not served).
 
 **Why:** one request instead of a deep import graph; no nested bare-specifier resolution at runtime
-(which is what would otherwise force import-map involvement). Regenerate after editing the source:
+(which is what would otherwise force import-map involvement). Regenerate after editing the source, from
+`BCJS.RCL/`:
 ```
-npx esbuild BCJS.RCL/js/chart-interop.src.js --bundle --format=esm --platform=browser --outfile=BCJS.RCL/wwwroot/chart-interop.js
+npx esbuild@0.27.0 js/chart-interop.src.js --bundle --format=esm --platform=browser --minify --outfile=wwwroot/chart-interop.js
 ```
+Since 1.3.0 the bundle is **minified, and ships no source map**: the date adapter and Hammer.js took it to
+757 KB unminified, 331 KB minified, and a map would add 1.4 MB to every install for a file only devtools
+reads. esbuild output is deterministic for a pinned version, so the map is rebuilt on demand instead (README,
+*Debugging the bundle*): `--sourcemap=external` writes the same `chart-interop.js` byte for byte, plus the
+map, and adds no `sourceMappingURL` comment.
 (The bundle is a committed artifact; there is no build-time esbuild target yet — see Open items.)
 
 ### 1.3 Fingerprinting: it DOES work in published WASM — it is just off by default for RCL JS

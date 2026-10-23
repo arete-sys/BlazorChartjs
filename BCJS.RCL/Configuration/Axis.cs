@@ -63,6 +63,21 @@ public sealed class Axis
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Ticks? Ticks { get; set; }
 
+    /// <summary>The axis line (Chart.js 4; replaces <see cref="Grid.DrawBorder"/>).</summary>
+    [JsonPropertyName("border")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public AxisBorder? Border { get; set; }
+
+    /// <summary>Extra space above the data on a numeric axis, as pixels (<c>"10"</c>) or a share of the range (<c>"5%"</c>).</summary>
+    [JsonPropertyName("grace")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Grace { get; set; }
+
+    /// <summary>Whether the axis runs in reverse.</summary>
+    [JsonPropertyName("reverse")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Reverse { get; set; }
+
     /// <summary>Axis title configuration.</summary>
     [JsonPropertyName("title")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

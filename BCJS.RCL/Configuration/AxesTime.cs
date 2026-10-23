@@ -8,6 +8,11 @@ public sealed class AxesTime
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Source { get; set; }
 
+    /// <summary>date-fns format for parsing date strings that are not ISO 8601, e.g. <c>"dd/MM/yyyy"</c>. Unset: ISO strings and timestamps are read as they are.</summary>
+    [JsonPropertyName("parser")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Parser { get; set; }
+
     /// <summary>Display format strings keyed by time unit.</summary>
     [JsonPropertyName("displayFormats")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

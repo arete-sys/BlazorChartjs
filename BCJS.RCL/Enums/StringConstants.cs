@@ -41,6 +41,25 @@ public static class ChartType
     public const string Scatter = "scatter";
 }
 
+/// <summary>Chart.js scale types, for <see cref="BCJS.Configuration.Axis.Type"/>.</summary>
+public static class ScaleType
+{
+    /// <summary>Numeric axis.</summary>
+    public const string Linear = "linear";
+
+    /// <summary>Numeric axis on a log scale.</summary>
+    public const string Logarithmic = "logarithmic";
+
+    /// <summary>One slot per label.</summary>
+    public const string Category = "category";
+
+    /// <summary>Dates spaced by their actual distance in time (date-fns adapter bundled).</summary>
+    public const string Time = "time";
+
+    /// <summary>Dates spaced evenly, one per data point, whatever the gaps between them.</summary>
+    public const string TimeSeries = "timeseries";
+}
+
 /// <summary>Time units for a Chart.js time scale.</summary>
 public static class TimeUnit
 {

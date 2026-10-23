@@ -1,0 +1,68 @@
+@page "/time-axis"
+
+<PageTitle>Time axis — BCJS</PageTitle>
+<h1>Time axis</h1>
+
+<p>
+    BCJS bundles the date-fns adapter, so <code>ScaleType.Time</code> and <code>ScaleType.TimeSeries</code>
+    axes work with no extra script. The labels are ISO dates; the axis spaces them by their real distance
+    in time and labels them with date-fns tokens (<code>DisplayFormats</code>, <code>TooltipFormat</code>).
+    Wheel, drag, and on a touch screen pinch and pan, zoom the time range.
+</p>
+
+<Chart Config="_config" Height="320px" AriaLabel="Notes published per month" />
+
+@code {
+    private readonly LineChartConfig _config = new();
+
+    protected override void OnInitialized()
+    {
+        var start = new DateOnly(2025, 1, 1);
+        _config.Data.Labels = [.. Enumerable.Range(0, 22).Select(m => start.AddMonths(m).ToString("yyyy-MM-dd"))];
+        _config.Data.Datasets.Add(new LineDataset
+        {
+            Label = "Notes",
+            Data = [.. Enumerable.Range(0, 22).Select(m => (decimal?)(40 + 15 * Math.Sin(m / 2.0) + m * 2))],
+            BorderColor = "#F39B1E",
+            BackgroundColor = "rgba(243, 155, 30, 0.15)",
+            Fill = true,
+            Tension = 0.3M,
+            PointRadius = 3,
+        });
+        _config.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins
+            {
+                Legend = new Legend { Html = new HtmlLegend(), Position = LegendPosition.Top, Align = Align.End },
+                Tooltip = new Tooltip { Html = new HtmlTooltip(), Format = new ValueFormat { Decimals = 0 } },
+                Zoom = new Zoom
+                {
+                    Mode = ZoomMode.X,
+                    Pan = new Pan { Enabled = true, Mode = ZoomMode.X },
+                    ZoomOptions = new ZoomOptions
+                    {
+                        Wheel = new Wheel { Enabled = true },
+                        Pinch = new Pinch { Enabled = true },
+                    },
+                },
+            },
+            Scales = new Dictionary<string, Axis>
+            {
+                ["x"] = new()
+                {
+                    Type = ScaleType.Time,
+                    Time = new AxesTime
+                    {
+                        Unit = TimeUnit.Month,
+                        TooltipFormat = "MMMM yyyy",
+                        DisplayFormats = new AxesTimeFormats { Month = "MMM yy" },
+                    },
+                    Grid = new Grid { Display = false },
+                },
+                ["y"] = new() { BeginAtZero = true, Ticks = new Ticks { Precision = 0 } },
+            },
+        };
+    }
+}

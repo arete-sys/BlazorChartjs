@@ -60,6 +60,31 @@ public class BarDataset : Dataset
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? HoverBackgroundColor { get; set; }
 
+    /// <summary>Per-bar border colors while hovered.</summary>
+    [JsonPropertyName("hoverBorderColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? HoverBorderColor { get; set; }
+
+    /// <summary>Bar corner radius in pixels.</summary>
+    [JsonPropertyName("borderRadius")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? BorderRadius { get; set; }
+
+    /// <summary>Maximum bar thickness in pixels, so a chart with few bars does not fill its width with them.</summary>
+    [JsonPropertyName("maxBarThickness")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? MaxBarThickness { get; set; }
+
+    /// <summary>Share (0–1) of its category slot each bar takes.</summary>
+    [JsonPropertyName("barPercentage")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? BarPercentage { get; set; }
+
+    /// <summary>Share (0–1) of the available width each category takes.</summary>
+    [JsonPropertyName("categoryPercentage")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? CategoryPercentage { get; set; }
+
     /// <summary>Stack group identifier(s).</summary>
     [JsonPropertyName("stack")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

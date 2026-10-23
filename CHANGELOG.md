@@ -1,7 +1,53 @@
-# Changelog
+﻿# Changelog
 
 All notable changes to BCJS are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+- `Legend.Html` (`HtmlLegend`: `CssClass`): the legend as an HTML list beside the chart, laid out from
+  `Legend.Position`/`Align`/`Reverse` and styled from `Legend.Labels`. Items toggle their series or slice on
+  click and on Enter/Space, highlight it on hover, and are `role="button"` with `aria-pressed`. Default
+  styles have zero specificity and read `--bcjs-legend-*` variables, so it can be themed from CSS.
+- `ValueFormat`, a browser-side number format (`Percentage`, `Decimals`, `Prefix`, `Suffix`, and new
+  `Compact` and `UseGrouping`), used by the new `Ticks.Format` and `Tooltip.Format`, so axis labels and
+  tooltip values can be formatted on Blazor Server. `DataLabelsFormat` now derives from it.
+- `Chart.AriaLabel` (the canvas becomes `role="img"` with that label) and
+  `Chart.ToBase64ImageAsync(type, quality, backgroundColor)`.
+- Chart.js 4 options: `Axis.Border` (`AxisBorder`), `Axis.Grace`, `Axis.Reverse`, `Ticks.Precision`,
+  `Ticks.Padding`, `Ticks.Display`, `Grid.LineWidth`, `BarDataset.HoverBorderColor`/`BorderRadius`/
+  `MaxBarThickness`/`BarPercentage`/`CategoryPercentage`, `LineDataset.PointHoverRadius`/
+  `PointHitRadius`/`PointBackgroundColor`/`PointBorderColor`/`BorderDash`/`SpanGaps`,
+  `Options.Layout` (`Layout.Padding`) and `Options.Locale`.
+- **Time axes work out of the box**: the Chart.js date-fns adapter (chartjs-adapter-date-fns 3.0.0 with
+  date-fns 4.1.0) is bundled, so `ScaleType.Time` and `ScaleType.TimeSeries` axes render with date-fns
+  format tokens. New `ScaleType` constants, `AxesTime.Parser` and `Ticks.Source`.
+- **Touch zoom and pan**: Hammer.js 2.0.8 replaces the zoom plugin's no-op stub, so pinch and pan work on
+  touch screens. Its `window.Hammer` global assignment is removed.
+- `LegendPosition.Top`, Chart.js's default legend position, which the enum lacked.
+- Sample pages: **HTML legend** (a pie and a bar chart with HTML legends and browser-side formats) and
+  **Time axis** (a monthly line on a time axis with wheel, drag and pinch zoom).
+- Slice colors on `PieDataset` and `DoughnutDataset`: `BorderColor`, `HoverBackgroundColor` and
+  `HoverBorderColor` (per-slice lists, like `BackgroundColor`). Unset, Chart.js darkens the slice and
+  its border on hover, which barely shows on translucent colors.
+- `DataLabelsFormat.MinPercentage`: hides the label of an item below that share of the visible total,
+  like ApexCharts' `minAngleToShowLabel` (`2.78` ≈ 10°).
+
+### Changed
+- `chart-interop.js` is now minified: 331 KB, down from 517 KB unminified in 1.2.0 even with the date
+  adapter and Hammer.js added (757 KB unminified). The bundled libraries' licence headers are kept at the
+  end of the file. No source map ships; the README's *Debugging the bundle* rebuilds the matching one.
+- The canvas now sits in its own `div.bcjs-chart-canvas` inside the container (Chart.js sizes the canvas
+  from its parent, and an HTML legend needs to sit beside it). Host CSS that selects
+  `.bcjs-chart-container > canvas` must select `.bcjs-chart-canvas > canvas` instead; the HTML tooltip is
+  positioned inside the new element.
+
+### Fixed
+- Clicking a legend item now hides or shows its series or slice. BCJS replaced Chart.js's legend
+  `onClick` to raise `OnLegendClick`, which dropped the toggle; it now runs Chart.js's own handler first.
+- An HTML legend added after the chart's first draw no longer leaves the canvas at its old width: the
+  chart is resized as soon as the legend appears, moves or goes.
 
 ## [1.2.0] — 2026-10-22
 

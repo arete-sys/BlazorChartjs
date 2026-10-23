@@ -164,6 +164,9 @@ public enum LegendPosition
 
     /// <summary><c>"right"</c></summary>
     Right,
+
+    /// <summary><c>"top"</c> (Chart.js's default).</summary>
+    Top,
 }
 
 /// <summary>Point marker style.</summary>

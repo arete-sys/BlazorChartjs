@@ -6,5 +6,7 @@
      class="bcjs-chart-container @Class"
      style="height:@Height; width:@Width; @Style"
      @onmouseout="OnMouseOutAsync">
-    <canvas id="@Config?.CanvasId"></canvas>
+    <div class="bcjs-chart-canvas">
+        <canvas id="@Config?.CanvasId" role="@(AriaLabel is null ? null : "img")" aria-label="@AriaLabel"></canvas>
+    </div>
 </div>

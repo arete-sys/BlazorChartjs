@@ -1,0 +1,134 @@
+@page "/html-legend"
+
+<PageTitle>HTML legend — BCJS</PageTitle>
+<h1>HTML legend</h1>
+
+<p>
+    <code>Legend.Html</code> lists the legend as HTML beside the canvas, so its text is as sharp as the page's
+    and a long list scrolls instead of splitting into columns. Click an item (or focus it and press Enter) to
+    hide its slice or series; hover it to highlight. It takes its marker, font, color and spacing from
+    <code>Legend.Labels</code>, and its look can be themed with <code>--bcjs-legend-*</code> CSS variables.
+</p>
+<p>
+    The pie also sets <code>HoverBackgroundColor</code> and hides labels under 10° with
+    <code>DataLabelsFormat.MinPercentage</code>; the bar chart formats its axis and tooltip in the browser with
+    <code>Ticks.Format</code> and <code>Tooltip.Format</code>.
+</p>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="dashboard-card">
+            <Chart Config="_pie" Height="260px" AriaLabel="Share of organizations by turnover band" />
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <Chart Config="_bar" Height="260px" AriaLabel="IT spend by industry" />
+    </div>
+</div>
+
+@code {
+    private readonly PieChartConfig _pie = new();
+    private readonly BarChartConfig _bar = new();
+
+    protected override void OnInitialized()
+    {
+        string[] shades = ["rgba(245, 154, 27, 1)", "rgba(245, 154, 27, 0.9)", "rgba(245, 154, 27, 0.8)",
+            "rgba(245, 154, 27, 0.7)", "rgba(245, 154, 27, 0.6)", "rgba(245, 154, 27, 0.5)"];
+        string[] lighter = ["rgba(250, 184, 92, 1)", "rgba(250, 184, 92, 0.9)", "rgba(250, 184, 92, 0.8)",
+            "rgba(250, 184, 92, 0.7)", "rgba(250, 184, 92, 0.6)", "rgba(250, 184, 92, 0.5)"];
+
+        _pie.Data.Labels = ["> $100bn", "$50bn-$100bn", "$25bn-$50bn", "$10bn-$25bn", "$5bn-$10bn", "< $5bn"];
+        _pie.Data.Datasets.Add(new PieDataset
+        {
+            Data = [1.89M, 18.87M, 11.32M, 9.43M, 11.32M, 47.17M],
+            BackgroundColor = [.. shades],
+            HoverBackgroundColor = [.. lighter],
+            BorderColor = ["#fff"],
+            HoverBorderColor = ["#fff"],
+            BorderWidth = 2,
+        });
+        _pie.Options = new PieOptions
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            RegisterDataLabels = true,
+            Plugins = new Plugins
+            {
+                Legend = new Legend
+                {
+                    Html = new HtmlLegend(),
+                    Position = LegendPosition.Right,
+                    Labels = new LegendLabels
+                    {
+                        UsePointStyle = true,
+                        PointStyle = PointStyle.Circle,
+                        BoxHeight = 12,
+                        Font = new Font { Size = 14 },
+                        Color = "#3c3c3c",
+                    },
+                },
+                DataLabels = new DataLabels
+                {
+                    Format = new DataLabelsFormat { Percentage = true, Decimals = 1, Suffix = "%", MinPercentage = 2.78M },
+                    Anchor = DatalabelsAnchor.End,
+                    Align = DatalabelsAlign.Start,
+                    Offset = 14,
+                    Color = "#fff",
+                    Font = new Font { Size = 14, Weight = "bold" },
+                    TextShadowColor = "rgba(0, 0, 0, 0.45)",
+                    TextShadowBlur = 2,
+                },
+                Tooltip = new Tooltip
+                {
+                    Html = new HtmlTooltip(),
+                    BackgroundColor = "rgba(160, 98, 20, 0.92)",
+                    BodyColor = "#fff",
+                    DisplayColors = false,
+                },
+            },
+        };
+
+        _bar.Data.Labels = ["Banks", "Insurance", "Retail", "Telecoms", "Utilities"];
+        _bar.Data.Datasets.Add(new BarDataset
+        {
+            Label = "2025",
+            Data = [12500, 8300, 4100, 9800, 2600],
+            BackgroundColor = ["#F39B1E"],
+            BorderRadius = 4,
+            MaxBarThickness = 32,
+        });
+        _bar.Data.Datasets.Add(new BarDataset
+        {
+            Label = "2026",
+            Data = [14200, 8900, 3900, 11100, 3100],
+            BackgroundColor = ["#2196F3"],
+            BorderRadius = 4,
+            MaxBarThickness = 32,
+        });
+        _bar.Options = new Options
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Plugins = new Plugins
+            {
+                Legend = new Legend { Html = new HtmlLegend(), Position = LegendPosition.Bottom },
+                Tooltip = new Tooltip
+                {
+                    Html = new HtmlTooltip(),
+                    Mode = InteractionMode.Index,
+                    Format = new ValueFormat { Prefix = "$", Suffix = "M", UseGrouping = true },
+                },
+            },
+            Scales = new Dictionary<string, Axis>
+            {
+                ["x"] = new() { Grid = new Grid { Display = false } },
+                ["y"] = new()
+                {
+                    Border = new AxisBorder { Display = false },
+                    Grace = "5%",
+                    Ticks = new Ticks { Format = new ValueFormat { Prefix = "$", Compact = true }, Precision = 0 },
+                },
+            },
+        };
+    }
+}

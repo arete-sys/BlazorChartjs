@@ -4,6 +4,7 @@
 // callbacks that call back into .NET through an IJSObjectReference + DotNetObjectReference.
 
 import { Chart } from './lib/chartjs/auto/auto.js';
+import './lib/dateadapter/chartjs-adapter-date-fns.bundle.esm.js'; // registers the date adapter time axes need
 import { getRelativePosition, toPadding } from './lib/chartjs/helpers/helpers.js';
 import ChartDataLabels from './lib/datalabels/chartjs-plugin-datalabels.esm.js';
 import zoomPlugin from './lib/zoom/chartjs-plugin-zoom.esm.js';
@@ -103,7 +104,7 @@ function ensureTooltipStyles() {
     document.head.append(style);
 }
 
-function applyHtmlTooltip(config) {
+function applyHtmlTooltip(config, format) {
     const tooltip = config.options?.plugins?.tooltip;
     const html = tooltip?.bcjsHtml;
     if (!html) return;
@@ -119,6 +120,7 @@ function applyHtmlTooltip(config) {
         style,
         customLabel: !!tooltip.callbacks?.hasLabel,
         categoryNamed: CATEGORY_NAMED.has(config.type),
+        format,
     };
     settings.showTitle = html.showTitle ?? !settings.categoryNamed;
     if (html.function) settings.fn = compileTooltipFunction(html.function);
@@ -279,7 +281,7 @@ function builtInTooltipContent(tooltip, settings) {
                 applyFont(label, html.labelFont);
                 row.append(label);
             }
-            const value = element('span', 'bcjs-tooltip-value', point.formattedValue);
+            const value = element('span', 'bcjs-tooltip-value', formatPointValue(point, settings.format));
             applyFont(value, s.bodyFont);
             applyFont(value, html.valueFont);
             row.append(value);
@@ -304,6 +306,188 @@ function positionHtmlTooltip(chart, tooltip, el) {
     el.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
 }
 
+// HTML legend: the canvas legend is switched off and this plugin lists Chart.js's own legend items
+// (filtered, sorted and reversed by the legend plugin) in a <ul> beside the canvas after each update.
+const htmlLegendPlugin = {
+    id: 'bcjsHtmlLegend',
+    afterUpdate(chart) {
+        renderHtmlLegend(chart);
+    },
+};
+
+const LEGEND_POSITIONS = new Set(['top', 'bottom', 'left', 'right']);
+
+function applyHtmlLegend(config) {
+    const legend = config.options?.plugins?.legend;
+    const html = legend?.bcjsHtml;
+    if (legend) delete legend.bcjsHtml;
+    if (!html || legend.display === false) return;
+
+    const labels = legend.labels ?? {};
+    config.options.plugins.bcjsHtmlLegend = {
+        cssClass: html.cssClass,
+        position: LEGEND_POSITIONS.has(legend.position) ? legend.position : 'top',
+        align: legend.align ?? 'center',
+        color: labels.color,
+        font: labels.font,
+        gap: labels.padding,
+        boxWidth: labels.boxWidth,
+        boxHeight: labels.boxHeight,
+        pointStyle: labels.usePointStyle ? (labels.pointStyle ?? 'circle') : null,
+    };
+    legend.display = false;
+}
+
+function ensureLegendStyles() {
+    if (document.getElementById('bcjs-legend-styles')) return;
+    const font = Chart.defaults.font;
+    const style = document.createElement('style');
+    style.id = 'bcjs-legend-styles';
+    style.textContent = `
+:where(.bcjs-legend) {
+  list-style: none; margin: 0; padding: 0; display: flex; flex: 0 0 auto; gap: var(--bcjs-legend-gap, 6px 16px);
+  font-family: ${font.family}; font-size: var(--bcjs-legend-font-size, ${font.size}px); line-height: 1.3;
+  color: var(--bcjs-legend-color, ${Chart.defaults.color});
+}
+:where([data-bcjs-legend=top] > .bcjs-legend, [data-bcjs-legend=bottom] > .bcjs-legend) {
+  flex-wrap: wrap; justify-content: center; padding: 8px 0;
+}
+:where([data-bcjs-legend=left] > .bcjs-legend, [data-bcjs-legend=right] > .bcjs-legend) {
+  flex-direction: column; justify-content: center; max-height: 100%; overflow-y: auto; padding: 0 8px;
+}
+:where([data-bcjs-legend=top] > .bcjs-legend, [data-bcjs-legend=left] > .bcjs-legend) { order: -1; }
+:where(.bcjs-legend-item) {
+  display: flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; user-select: none;
+  border-radius: 4px; transition: opacity .15s ease;
+}
+:where(.bcjs-legend-item:focus-visible) { outline: 2px solid currentColor; outline-offset: 2px; }
+:where(.bcjs-legend-item-hidden) { opacity: var(--bcjs-legend-hidden-opacity, 0.45); }
+:where(.bcjs-legend-marker) {
+  flex: none; width: var(--bcjs-legend-marker-size, 12px); height: var(--bcjs-legend-marker-size, 12px);
+  border-radius: 2px;
+}
+:where(.bcjs-legend-marker-circle) { border-radius: 50%; }
+:where(.bcjs-legend-marker-rounded) { border-radius: 4px; }
+`;
+    document.head.append(style);
+}
+
+const LEGEND_JUSTIFY = { start: 'flex-start', center: 'center', end: 'flex-end' };
+const LINE_TYPES = new Set(['line', 'radar']);
+
+function renderHtmlLegend(chart) {
+    const settings = chart.config.options?.plugins?.bcjsHtmlLegend;
+    const container = chart.canvas.parentNode?.parentNode;
+    if (!settings || !container) {
+        removeHtmlLegend(chart);
+        return;
+    }
+    const items = chart.legend?.legendItems ?? [];
+    // Rebuilding the list under the pointer would re-fire hover, so only rebuild when something changed.
+    const signature = JSON.stringify([settings, items.map(i => [i.text, i.fillStyle, i.strokeStyle, i.hidden])]);
+    let list = chart.$bcjsLegend;
+    if (list && list.parentNode === container && signature === chart.$bcjsLegendSignature) return;
+
+    ensureLegendStyles();
+    let moved = container.dataset.bcjsLegend !== settings.position;
+    if (!list || list.parentNode !== container) {
+        list?.remove();
+        list = element('ul', 'bcjs-legend');
+        wireLegendEvents(chart, list);
+        container.append(list);
+        chart.$bcjsLegend = list;
+        moved = true;
+    }
+    chart.$bcjsLegendSignature = signature;
+    chart.$bcjsLegendItems = items;
+    container.dataset.bcjsLegend = settings.position;
+    // The canvas was sized before the legend took its share; don't wait on the resize observer.
+    if (moved) resizeSoon(chart);
+
+    list.className = settings.cssClass ? `bcjs-legend ${settings.cssClass}` : 'bcjs-legend';
+    list.style.color = settings.color ?? '';
+    list.style.gap = typeof settings.gap === 'number' ? `${settings.gap}px` : '';
+    list.style.justifyContent = LEGEND_JUSTIFY[settings.align] ?? '';
+    for (const key of ['fontFamily', 'fontSize', 'fontStyle', 'fontWeight', 'lineHeight']) list.style[key] = '';
+    applyFont(list, settings.font);
+
+    list.replaceChildren(...items.map((item, i) => legendItemElement(chart, item, i, settings)));
+}
+
+function legendItemElement(chart, item, position, settings) {
+    const li = element('li', item.hidden ? 'bcjs-legend-item bcjs-legend-item-hidden' : 'bcjs-legend-item');
+    li.dataset.item = String(position);
+    li.setAttribute('role', 'button');
+    li.tabIndex = 0;
+    li.setAttribute('aria-pressed', String(!item.hidden));
+
+    const shape = settings.pointStyle === 'circle' ? ' bcjs-legend-marker-circle'
+        : settings.pointStyle === 'rectRounded' ? ' bcjs-legend-marker-rounded' : '';
+    const marker = element('span', `bcjs-legend-marker${shape}`);
+    const dataset = chart.data.datasets[item.datasetIndex ?? 0];
+    const lineLike = item.datasetIndex !== undefined && LINE_TYPES.has(dataset?.type ?? chart.config.type);
+    marker.style.background = (lineLike ? item.strokeStyle : item.fillStyle) ?? '';
+    const width = settings.pointStyle ? (settings.boxHeight ?? settings.boxWidth) : (settings.boxWidth ?? settings.boxHeight);
+    const height = settings.boxHeight ?? settings.boxWidth;
+    if (typeof width === 'number') marker.style.width = `${width}px`;
+    if (typeof height === 'number') marker.style.height = `${height}px`;
+
+    li.append(marker, element('span', 'bcjs-legend-text', item.text));
+    return li;
+}
+
+function wireLegendEvents(chart, list) {
+    const itemOf = (evt) => {
+        const li = evt.target.closest?.('.bcjs-legend-item');
+        return li ? chart.$bcjsLegendItems?.[Number(li.dataset.item)] : undefined;
+    };
+    const toggle = (evt) => {
+        const item = itemOf(evt);
+        if (!item || !chart.legend) return;
+        chart.config.options.plugins?.legend?.onClick?.call(chart.legend, evt, item, chart.legend);
+    };
+    list.addEventListener('click', toggle);
+    list.addEventListener('keydown', (evt) => {
+        if (evt.key !== 'Enter' && evt.key !== ' ') return;
+        evt.preventDefault();
+        toggle(evt);
+    });
+    list.addEventListener('mouseover', (evt) => highlightLegendItem(chart, itemOf(evt)));
+    list.addEventListener('mouseleave', () => highlightLegendItem(chart, undefined));
+}
+
+// Hovering an item lights up its slice or series, as hovering the chart does.
+function highlightLegendItem(chart, item) {
+    let active = [];
+    if (item && !item.hidden) {
+        if (CATEGORY_NAMED.has(chart.config.type)) {
+            active = chart.data.datasets
+                .map((_, datasetIndex) => ({ datasetIndex, index: item.index }))
+                .filter(a => chart.isDatasetVisible(a.datasetIndex));
+        } else if (item.datasetIndex !== undefined) {
+            active = chart.getDatasetMeta(item.datasetIndex).data.map((_, index) => ({ datasetIndex: item.datasetIndex, index }));
+        }
+    }
+    if (!active.length && !chart.getActiveElements().length) return;
+    chart.setActiveElements(active);
+    chart.render();
+}
+
+function removeHtmlLegend(chart) {
+    if (!chart.$bcjsLegend) return;
+    const container = chart.$bcjsLegend.parentNode;
+    chart.$bcjsLegend.remove();
+    if (container?.dataset) delete container.dataset.bcjsLegend;
+    chart.$bcjsLegend = chart.$bcjsLegendItems = chart.$bcjsLegendSignature = null;
+    resizeSoon(chart);
+}
+
+function resizeSoon(chart) {
+    requestAnimationFrame(() => {
+        if (chart.canvas && chart.attached) chart.resize();
+    });
+}
+
 // Rewires the serialized control flags into live Chart.js callbacks bound to `dotNetRef`.
 function wireCallbacks(config, dotNetRef, getChart) {
     for (const dataset of config.data?.datasets ?? []) applyLabelFormat(dataset.datalabels);
@@ -312,7 +496,10 @@ function wireCallbacks(config, dotNetRef, getChart) {
     if (!options) return;
 
     applyLabelFormat(options.plugins?.datalabels);
-    applyHtmlTooltip(config);
+    const tooltipFormat = takeTooltipFormat(options);
+    applyHtmlTooltip(config, tooltipFormat);
+    applyCanvasTooltipFormat(config, tooltipFormat);
+    applyHtmlLegend(config);
 
     // Legend label filter (synchronous; WASM only).
     if (options.plugins?.legend?.labels?.hasFilter) {
@@ -374,6 +561,7 @@ function wireCallbacks(config, dotNetRef, getChart) {
                 ticks.callback = (value, index, all) =>
                     dotNetRef.invokeMethodAsync('TicksCallbackAsync', name, value, index, all.map(t => t.value));
             }
+            applyTickFormat(ticks);
         }
     }
 
@@ -389,7 +577,10 @@ function wireCallbacks(config, dotNetRef, getChart) {
     };
     options.plugins = options.plugins || {};
     options.plugins.legend = options.plugins.legend || {};
-    options.plugins.legend.onClick = (_evt, item) => {
+    // Setting onClick replaces Chart.js's own, so call it first or a click no longer hides the series.
+    const toggle = Chart.overrides[config.type]?.plugins?.legend?.onClick ?? Chart.defaults.plugins.legend.onClick;
+    options.plugins.legend.onClick = function (evt, item, legend) {
+        toggle?.call(this, evt, item, legend);
         dotNetRef.invokeMethodAsync('OnLegendClickCallback', { LegendIndex: item.index ?? item.datasetIndex, LegendText: item.text });
     };
 }
@@ -406,15 +597,71 @@ function formatLabel(value, ctx, format) {
         return ChartDataLabels.defaults.formatter(value, ctx);
     }
     let n = value;
-    if (format.percentage) {
-        let total = 0;
-        ctx.dataset.data.forEach((v, i) => {
-            if (typeof v === 'number' && Number.isFinite(v) && ctx.chart.getDataVisibility(i)) total += v;
-        });
-        n = total === 0 ? 0 : (value / total) * 100;
+    if (format.percentage || format.minPercentage != null) {
+        const share = shareOfTotal(value, ctx.dataset.data, ctx.chart);
+        // An empty array hides the label; null would make the plugin fall back to the raw value.
+        if (format.minPercentage != null && share < format.minPercentage) return [];
+        if (format.percentage) n = share;
     }
-    const text = Number.isInteger(format.decimals) ? n.toFixed(format.decimals) : String(n);
+    return formatNumber(n, format, ctx.chart.options.locale);
+}
+
+function shareOfTotal(value, data, chart) {
+    let total = 0;
+    data.forEach((v, i) => {
+        if (typeof v === 'number' && Number.isFinite(v) && chart.getDataVisibility(i)) total += v;
+    });
+    return total === 0 ? 0 : (value / total) * 100;
+}
+
+function formatNumber(n, format, locale) {
+    const decimals = Number.isInteger(format.decimals) ? format.decimals : undefined;
+    let text;
+    if (format.compact) {
+        text = new Intl.NumberFormat(locale || undefined, { notation: 'compact', maximumFractionDigits: decimals ?? 1 }).format(n);
+    } else if (format.useGrouping) {
+        text = new Intl.NumberFormat(locale || undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals ?? 20 }).format(n);
+    } else {
+        text = decimals !== undefined ? n.toFixed(decimals) : String(n);
+    }
     return (format.prefix ?? '') + text + (format.suffix ?? '');
+}
+
+function formatPointValue(point, format) {
+    const value = point.raw;
+    if (!format || typeof value !== 'number' || !Number.isFinite(value)) return point.formattedValue;
+    const n = format.percentage ? shareOfTotal(value, point.dataset.data, point.chart) : value;
+    return formatNumber(n, format, point.chart.options.locale);
+}
+
+function takeTooltipFormat(options) {
+    const tooltip = options.plugins?.tooltip;
+    const format = tooltip?.bcjsFormat;
+    if (tooltip) delete tooltip.bcjsFormat;
+    return format;
+}
+
+// Wraps Chart.js's own label callback so only the value changes; the HTML tooltip formats its own rows.
+function applyCanvasTooltipFormat(config, format) {
+    const tooltip = config.options?.plugins?.tooltip;
+    if (!format || tooltip?.external || tooltip?.callbacks?.label || tooltip?.callbacks?.hasLabel) return;
+    const label = Chart.overrides[config.type]?.plugins?.tooltip?.callbacks?.label ?? Chart.defaults.plugins.tooltip.callbacks.label;
+    tooltip.callbacks = tooltip.callbacks || {};
+    tooltip.callbacks.label = function (item) {
+        return label.call(this, { ...item, formattedValue: formatPointValue(item, format) });
+    };
+}
+
+function applyTickFormat(ticks) {
+    const format = ticks.bcjsFormat;
+    delete ticks.bcjsFormat;
+    if (!format || ticks.callback) return;
+    ticks.callback = function (value) {
+        if (this.type === 'category') return this.getLabelForValue(value);
+        if (typeof value !== 'number') return value;
+        // Generated ticks carry float noise (0.30000000000000004) that String() would print.
+        return formatNumber(Number(value.toPrecision(12)), { ...format, percentage: false }, this.chart.options.locale);
+    };
 }
 
 // Inline per chart, never Chart.register: the plugin draws labels by default and would leak to every chart.
@@ -430,6 +677,12 @@ const registeredPlugins = new Set();
 
 function ensurePlugins(config) {
     const options = config.options ?? {};
+
+    // Global but inert: it only acts on charts whose options carry bcjsHtmlLegend.
+    if (!registeredPlugins.has('htmlLegend')) {
+        Chart.register(htmlLegendPlugin);
+        registeredPlugins.add('htmlLegend');
+    }
 
     if (options.plugins?.zoom && !registeredPlugins.has('zoom')) {
         Chart.register(zoomPlugin);
@@ -558,5 +811,21 @@ export function destroy(canvasId) {
     if (!chart) return;
     setCrosshair(chart, canvasId, null);
     removeHtmlTooltip(chart);
+    removeHtmlLegend(chart);
     chart.destroy();
+}
+
+/** Returns the chart as an image data URL, painted over `backgroundColor` when one is given. */
+export function toBase64Image(canvasId, type, quality, backgroundColor) {
+    const chart = Chart.getChart(canvasId);
+    if (!chart) return null;
+    if (!backgroundColor) return chart.toBase64Image(type, quality ?? undefined);
+    const copy = document.createElement('canvas');
+    copy.width = chart.canvas.width;
+    copy.height = chart.canvas.height;
+    const ctx = copy.getContext('2d');
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, copy.width, copy.height);
+    ctx.drawImage(chart.canvas, 0, 0);
+    return copy.toDataURL(type, quality ?? undefined);
 }

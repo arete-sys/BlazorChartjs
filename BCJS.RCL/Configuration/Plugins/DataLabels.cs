@@ -1,4 +1,4 @@
-namespace BCJS.Configuration;
+﻿namespace BCJS.Configuration;
 
 /// <summary>
 /// Data labels plugin configuration (chartjs-plugin-datalabels). Can be set globally on
@@ -111,14 +111,15 @@ public class DataLabels
 }
 
 /// <summary>
-/// Declarative data-label text format (see <see cref="DataLabels.Format"/>). Applies to numeric data;
-/// other values are shown unchanged.
+/// Declarative number format applied in the browser, so it works on Blazor Server and WebAssembly: used by
+/// <see cref="Ticks.Format"/>, <see cref="Tooltip.Format"/> and (as <see cref="DataLabelsFormat"/>)
+/// <see cref="DataLabels.Format"/>. Applies to numeric values; other values are shown unchanged.
 /// </summary>
-public sealed class DataLabelsFormat
+public class ValueFormat
 {
     /// <summary>
-    /// When <see langword="true"/>, the label shows the value as a percentage of the dataset total
-    /// (counting only visible items) instead of the raw value.
+    /// When <see langword="true"/>, the value is shown as a percentage of its dataset's total (counting only
+    /// visible items) instead of the raw value. Ignored on axis ticks.
     /// </summary>
     [JsonPropertyName("percentage")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -138,4 +139,36 @@ public sealed class DataLabelsFormat
     [JsonPropertyName("suffix")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Suffix { get; set; }
+
+    /// <summary>
+    /// When <see langword="true"/>, large numbers are shortened in the chart's locale (<c>12,500</c> → <c>12.5K</c>).
+    /// <see cref="Decimals"/> is then the most digits after the point (default 1).
+    /// </summary>
+    [JsonPropertyName("compact")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Compact { get; set; }
+
+    /// <summary>
+    /// When <see langword="true"/>, thousands are separated in the chart's locale (<c>12,500</c>). Unset: no
+    /// separators, as before this option existed.
+    /// </summary>
+    [JsonPropertyName("useGrouping")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? UseGrouping { get; set; }
+}
+
+/// <summary>
+/// Data-label text format (see <see cref="DataLabels.Format"/>): a <see cref="ValueFormat"/> that can also hide
+/// the labels of small items.
+/// </summary>
+public sealed class DataLabelsFormat : ValueFormat
+{
+    /// <summary>
+    /// Hides the label of any item whose share of the visible total is below this percentage, e.g.
+    /// <c>2.78</c> for slices under 10° (ApexCharts' <c>minAngleToShowLabel</c>). Applies with or without
+    /// <see cref="ValueFormat.Percentage"/>.
+    /// </summary>
+    [JsonPropertyName("minPercentage")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? MinPercentage { get; set; }
 }

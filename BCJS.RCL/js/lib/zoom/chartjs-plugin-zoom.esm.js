@@ -4,7 +4,7 @@
  * (c) 2016-2024 chartjs-plugin-zoom Contributors
  * Released under the MIT License
  */
-import Hammer from './hammer-stub.js';
+import Hammer from './hammer.esm.js';
 import { each, valueOrDefault, almostEquals, callback, sign, getRelativePosition, _isPointInArea } from '../chartjs/helpers/helpers.js';
 
 const getModifierKey = opts => opts && opts.enabled && opts.modifierKey;

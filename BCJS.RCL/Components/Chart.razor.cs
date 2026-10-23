@@ -40,6 +40,13 @@ public partial class Chart : IAsyncDisposable
     [Parameter]
     public string? Style { get; set; }
 
+    /// <summary>
+    /// Accessible name for the chart (e.g. a one-line summary of what it shows). When set, the canvas is
+    /// exposed to assistive technology as an image with this label.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
     /// <summary>Raised when a data element is clicked.</summary>
     [Parameter]
     public EventCallback<CallbackGenericContext> OnChartClick { get; set; }
@@ -120,6 +127,22 @@ public partial class Chart : IAsyncDisposable
         if (_interop is null || Config is null)
             return;
         await _interop.ClearDataAsync(Config.CanvasId);
+    }
+
+    /// <summary>
+    /// Returns the chart as an image data URL (e.g. <c>data:image/png;base64,…</c>), or <see langword="null"/>
+    /// before the chart is drawn. The canvas only: an HTML legend or tooltip is not in the image.
+    /// </summary>
+    /// <param name="type">The image MIME type, e.g. <c>"image/png"</c> or <c>"image/jpeg"</c>.</param>
+    /// <param name="quality">JPEG/WebP quality between 0 and 1.</param>
+    /// <param name="backgroundColor">
+    /// Color painted behind the chart, which is otherwise transparent (and black in a JPEG).
+    /// </param>
+    public async Task<string?> ToBase64ImageAsync(string type = "image/png", double? quality = null, string? backgroundColor = null)
+    {
+        if (_interop is null || Config is null)
+            return null;
+        return await _interop.ToBase64ImageAsync(Config.CanvasId, type, quality, backgroundColor);
     }
 
     private async Task OnMouseOutAsync(MouseEventArgs args)

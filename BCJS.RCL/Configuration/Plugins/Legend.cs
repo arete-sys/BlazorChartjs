@@ -16,6 +16,15 @@ public class Legend
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Display { get; set; } = true;
 
+    /// <summary>
+    /// Renders the legend as HTML beside the chart instead of on the canvas, so its text is as sharp as the
+    /// page's and it never splits into columns. Items toggle their series or slice on click (and Enter or
+    /// Space), and CSS can theme it. Works on Blazor Server and WebAssembly.
+    /// </summary>
+    [JsonPropertyName("bcjsHtml")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public HtmlLegend? Html { get; set; }
+
     /// <summary>Whether the legend takes the full width/height of its position.</summary>
     [JsonPropertyName("fullSize")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

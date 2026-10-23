@@ -1,4 +1,4 @@
-namespace BCJS.Configuration;
+﻿namespace BCJS.Configuration;
 
 /// <summary>Configuration for a doughnut chart.</summary>
 public class DoughnutChartConfig : IChartConfig
@@ -49,4 +49,19 @@ public class DoughnutDataset : Dataset
     [JsonPropertyName("hoverOffset")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? HoverOffset { get; set; }
+
+    /// <summary>Per-slice border colors.</summary>
+    [JsonPropertyName("borderColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? BorderColor { get; set; }
+
+    /// <summary>Per-slice background colors while hovered. Unset: Chart.js darkens <see cref="BackgroundColor"/>.</summary>
+    [JsonPropertyName("hoverBackgroundColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? HoverBackgroundColor { get; set; }
+
+    /// <summary>Per-slice border colors while hovered. Unset: Chart.js darkens <see cref="BorderColor"/>.</summary>
+    [JsonPropertyName("hoverBorderColor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<string>? HoverBorderColor { get; set; }
 }

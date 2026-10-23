@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using BCJS.Configuration;
 using BCJS.Enums;
 using BCJS.Serialization;
@@ -227,11 +227,12 @@ public class TooltipLegendSerializationTests
         {
             Plugins = new Plugins
             {
-                DataLabels = new DataLabels { Format = new DataLabelsFormat { Percentage = true, Decimals = 1, Suffix = "%" } },
+                DataLabels = new DataLabels { Format = new DataLabelsFormat { Percentage = true, Decimals = 1, Suffix = "%", MinPercentage = 2.78M } },
             },
         }).GetProperty("datalabels").GetProperty("bcjsFormat");
 
-        Assert.Equal(["decimals", "percentage", "suffix"], PropertyNames(set).Order(StringComparer.Ordinal));
+        Assert.Equal(["decimals", "minPercentage", "percentage", "suffix"], PropertyNames(set).Order(StringComparer.Ordinal));
+        Assert.Equal(2.78M, set.GetProperty("minPercentage").GetDecimal());
         Assert.True(set.GetProperty("percentage").GetBoolean());
         Assert.Equal(1, set.GetProperty("decimals").GetInt32());
         Assert.Equal("%", set.GetProperty("suffix").GetString());
