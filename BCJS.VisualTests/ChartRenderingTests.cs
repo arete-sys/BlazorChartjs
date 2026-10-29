@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Playwright;
 
 namespace BCJS.VisualTests;
@@ -24,7 +24,7 @@ public sealed class ChartRenderingTests : IClassFixture<SampleServerFixture>, IA
         """;
 
     private static readonly string[] AllRoutes =
-        ["/line", "/bar", "/pie-doughnut", "/radar", "/mixed", "/zoom", "/datalabels", "/dashboard-pie", "/data-update", "/custom-tooltip", "/html-legend", "/time-axis"];
+        ["/line", "/bar", "/pie-doughnut", "/radar", "/mixed", "/zoom", "/datalabels", "/dashboard-pie", "/data-update", "/custom-tooltip", "/html-legend", "/time-axis", "/doughnut-list"];
 
     // Chart.js replaces the canvas's "$chartjs" expando when a chart is re-created: same object = updated in place.
     private const string SnapshotCanvases = """
@@ -383,6 +383,58 @@ public sealed class ChartRenderingTests : IClassFixture<SampleServerFixture>, IA
 
         Assert.True(_errors.Count == 0,
             $"console/page errors on /html-legend:{Environment.NewLine}{string.Join(Environment.NewLine, _errors)}");
+    }
+
+    // Alpha of the canvas pixel at a point given as a share of the canvas's CSS size.
+    private const string CanvasAlphaAt = """
+        ({ fx, fy }) => {
+            const c = document.querySelector('canvas');
+            const x = Math.round(c.width * fx), y = Math.round(c.height * fy);
+            return c.getContext('2d').getImageData(x, y, 1, 1).data[3];
+        }
+        """;
+
+    [Fact]
+    public async Task Doughnut_list_highlights_both_ways_and_fades_the_rest()
+    {
+        await _page.GotoAsync(_fixture.BaseUrl + "/doughnut-list", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+            Timeout = 60_000,
+        });
+        await _page.WaitForSelectorAsync(".doughnut-row", new PageWaitForSelectorOptions { Timeout = 30_000 });
+        await _page.WaitForTimeoutAsync(2_000);
+
+        Assert.Equal("201", await _page.Locator(".bcjs-chart-overlay .doughnut-total").TextContentAsync());
+        // The "> 100k" slice starts at 12 o'clock and runs clockwise; this point sits in its middle.
+        var firstSlice = new { fx = 0.5 + 0.38 * Math.Cos(-50 * Math.PI / 180), fy = 0.5 + 0.38 * Math.Sin(-50 * Math.PI / 180) };
+        Assert.True(await _page.EvaluateAsync<int>(CanvasAlphaAt, firstSlice) > 240, "the first slice is not drawn solid");
+        await _page.Locator(".doughnut-list").ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("doughnut-list") });
+
+        await _page.Locator(".doughnut-row").Nth(4).HoverAsync();
+        await _page.WaitForTimeoutAsync(1_000);
+        var faded = await _page.EvaluateAsync<int>(CanvasAlphaAt, firstSlice);
+        Assert.True(faded is > 40 and < 120, $"hovering the last row should fade the first slice to ~30% (alpha {faded})");
+        await _page.Locator(".doughnut-list").ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("doughnut-list-row-hover") });
+
+        await _page.Mouse.MoveAsync(0, 0);
+        await _page.WaitForTimeoutAsync(1_000);
+        Assert.True(await _page.EvaluateAsync<int>(CanvasAlphaAt, firstSlice) > 240, "leaving the list did not clear the fade");
+
+        var box = await _page.Locator("canvas").BoundingBoxAsync();
+        Assert.NotNull(box);
+        await _page.Mouse.MoveAsync(box.X + box.Width * (float)firstSlice.fx, box.Y + box.Height * (float)firstSlice.fy);
+        await _page.WaitForTimeoutAsync(1_000);
+        Assert.Contains("on", await _page.Locator(".doughnut-row").Nth(0).GetAttributeAsync("class") ?? "");
+        Assert.Contains("off", await _page.Locator(".doughnut-row").Nth(4).GetAttributeAsync("class") ?? "");
+        await _page.Locator(".doughnut-list").ScreenshotAsync(new LocatorScreenshotOptions { Path = ShotPath("doughnut-list-slice-hover") });
+
+        await _page.Mouse.MoveAsync(0, 0);
+        await _page.WaitForTimeoutAsync(1_000);
+        Assert.DoesNotContain("on", (await _page.Locator(".doughnut-row").Nth(0).GetAttributeAsync("class") ?? "").Split(' '));
+
+        Assert.True(_errors.Count == 0,
+            $"console/page errors on /doughnut-list:{Environment.NewLine}{string.Join(Environment.NewLine, _errors)}");
     }
 
     private async Task<JsonElement> ReadLegendAsync(int canvasIndex)

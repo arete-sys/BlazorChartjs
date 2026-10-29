@@ -121,6 +121,55 @@ public class ChartComponentTests
     }
 
     [Fact]
+    public void Child_content_is_centred_over_the_canvas_only_when_given()
+    {
+        using var ctx = CreateContext(out _);
+
+        var bare = ctx.Render<Chart>(p => p.Add(c => c.Config, SampleConfig()));
+        Assert.Empty(bare.FindAll(".bcjs-chart-overlay"));
+
+        var withContent = ctx.Render<Chart>(p => p
+            .Add(c => c.Config, SampleConfig())
+            .AddChildContent("<strong>201</strong>"));
+        var overlay = withContent.Find("div.bcjs-chart-canvas > div.bcjs-chart-overlay");
+        Assert.Equal("201", overlay.QuerySelector("strong")?.TextContent);
+    }
+
+    [Fact]
+    public void Create_tells_the_module_whether_to_report_active_changes()
+    {
+        using var ctx = CreateContext(out var module);
+        ctx.Render<Chart>(p => p.Add(c => c.Config, SampleConfig()));
+        Assert.Equal(false, Assert.Single(module.Invocations["create"]).Arguments[3]);
+
+        using var ctx2 = CreateContext(out var module2);
+        ctx2.Render<Chart>(p => p
+            .Add(c => c.Config, SampleConfig())
+            .Add(c => c.OnActiveChanged, (ActiveElement[] _) => { }));
+        Assert.Equal(true, Assert.Single(module2.Invocations["create"]).Arguments[3]);
+    }
+
+    [Fact]
+    public async Task SetActiveElementsAsync_passes_the_elements_and_OnActiveChanged_raises_them()
+    {
+        using var ctx = CreateContext(out var module);
+        ActiveElement[]? raised = null;
+        var config = SampleConfig();
+        var cut = ctx.Render<Chart>(p => p
+            .Add(c => c.Config, config)
+            .Add(c => c.OnActiveChanged, (ActiveElement[] e) => raised = e));
+
+        await cut.InvokeAsync(() => cut.Instance.SetActiveElementsAsync(new ActiveElement(0, 3)));
+        var invocation = Assert.Single(module.Invocations["setActiveElements"]);
+        Assert.Equal(config.CanvasId, invocation.Arguments[0]);
+        Assert.Equal([new ActiveElement(0, 3)], (ActiveElement[])invocation.Arguments[1]!);
+
+        await cut.InvokeAsync(() => cut.Instance.OnActiveChangedCallback([new ActiveElement(0, 1)]));
+        Assert.NotNull(raised);
+        Assert.Equal([new ActiveElement(0, 1)], raised);
+    }
+
+    [Fact]
     public async Task ToBase64ImageAsync_calls_the_module_with_the_canvas_and_options()
     {
         using var ctx = CreateContext(out var module);

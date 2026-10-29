@@ -1,5 +1,14 @@
 # Migrating to BCJS
 
+## Upgrading from BCJS 1.2 to 1.3
+
+1.3 adds options only, with two changes worth checking:
+
+- **The canvas has a wrapper.** It now sits in `div.bcjs-chart-canvas` inside the container. Host CSS that
+  selects `.bcjs-chart-container > canvas` must select `.bcjs-chart-canvas > canvas` instead.
+- **Clicking a legend item toggles its series or slice again**, as in plain Chart.js. Through 1.2 the
+  click only raised `OnLegendClick`. `OnLegendClick` is still raised.
+
 ## Upgrading from BCJS 1.1 to 1.2
 
 1.2 adds options only, with two behaviour changes worth checking:
@@ -67,8 +76,8 @@ Serialization moved to **System.Text.Json source generators**. If you relied on 
 unmodelled properties through, add them to the option classes instead — there is no reflection
 fallback over the option model.
 
-## 6. Not yet ported
+## 6. Plugins
 
-The **zoom** and **data-labels** external plugins are modelled but not yet vendored as isolated
-modules. If you used them, track the follow-up or supply the plugin globally for now (data-labels is
-auto-registered when a `ChartDataLabels` global exists).
+The **zoom** and **data-labels** plugins ship inside BCJS, so remove their `<script>` tags. Data labels
+are drawn only on charts that set `Options.RegisterDataLabels = true`; zoom is configured with
+`Options.Plugins.Zoom`, and touch pinch and pan work without a separate Hammer.js script.

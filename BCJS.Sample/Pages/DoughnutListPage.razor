@@ -1,0 +1,77 @@
+@page "/doughnut-list"
+
+<PageTitle>Doughnut with a list — BCJS</PageTitle>
+<h1>Doughnut with a list</h1>
+
+<p>
+    A doughnut with a total in its hole (<code>Chart.ChildContent</code>, <code>Options.Cutout</code>) and a list of
+    its slices beside it. Hovering a row highlights its slice (<code>SetActiveElementsAsync</code>); hovering a slice
+    highlights its row (<code>OnActiveChanged</code>). The other slices fade (<code>Options.InactiveOpacity</code>).
+</p>
+
+<div class="doughnut-list">
+    <Chart @ref="_chart" Config="_config" Width="240px" Height="240px" AriaLabel="Organisations by headcount"
+           OnActiveChanged="OnActiveChanged">
+        <strong class="doughnut-total">201</strong>
+        <span class="doughnut-unit">organisations</span>
+    </Chart>
+    <ul class="doughnut-rows" @onmouseleave="() => HighlightAsync(null)">
+        @for (var i = 0; i < Labels.Length; i++)
+        {
+            var index = i;
+            <li class="doughnut-row @(_active == index ? "on" : null) @(_active is not null && _active != index ? "off" : null)"
+                data-i="@index" @onmouseenter="() => HighlightAsync(index)">
+                <span class="doughnut-swatch" style="background:@Colours[index]"></span>
+                <span>@Labels[index]</span>
+                <span class="doughnut-value">@($"{Values[index]:0.0}%")</span>
+            </li>
+        }
+    </ul>
+</div>
+
+@code {
+    private static readonly string[] Labels = ["> 100k", "50k–100k", "25k–50k", "5k–25k", "< 5k"];
+    private static readonly decimal[] Values = [22.4M, 11.9M, 5.0M, 26.4M, 34.3M];
+    private static readonly string[] Colours = ["#B45F06", "#F59A1B", "#F7AE49", "#F9C276", "#FCE0BA"];
+
+    private readonly PieChartConfig _config = new() { Type = ChartType.Doughnut };
+    private Chart? _chart;
+    private int? _active;
+
+    protected override void OnInitialized()
+    {
+        _config.Data.Labels = [.. Labels];
+        _config.Data.Datasets.Add(new PieDataset
+        {
+            Data = [.. Values.Select(v => (decimal?)v)],
+            BackgroundColor = [.. Colours],
+            BorderColor = ["#fff"],
+            HoverBorderColor = ["#fff"],
+            BorderWidth = 3,
+            HoverOffset = 6,
+        });
+        _config.Options = new PieOptions
+        {
+            Responsive = true,
+            MaintainAspectRatio = false,
+            Cutout = "60%",
+            InactiveOpacity = 0.3M,
+            Layout = new Layout { Padding = new Padding(6) },
+            Plugins = new Plugins
+            {
+                Legend = new Legend { Display = false },
+                Tooltip = new Tooltip { Enabled = false },
+            },
+        };
+    }
+
+    private async Task HighlightAsync(int? index)
+    {
+        _active = index;
+        if (_chart is not null)
+            await _chart.SetActiveElementsAsync(index is null ? [] : [new ActiveElement(0, index.Value)]);
+    }
+
+    private void OnActiveChanged(ActiveElement[] elements) =>
+        _active = elements.Length == 0 ? null : elements[0].Index;
+}

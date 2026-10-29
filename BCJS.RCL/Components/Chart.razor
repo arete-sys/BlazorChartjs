@@ -8,5 +8,9 @@
      @onmouseout="OnMouseOutAsync">
     <div class="bcjs-chart-canvas">
         <canvas id="@Config?.CanvasId" role="@(AriaLabel is null ? null : "img")" aria-label="@AriaLabel"></canvas>
+        @if (ChildContent is not null)
+        {
+            <div class="bcjs-chart-overlay">@ChildContent</div>
+        }
     </div>
 </div>

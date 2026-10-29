@@ -23,6 +23,9 @@ public readonly record struct ClickValue(int DatasetIndex, int ValueIndex, decim
 /// <param name="DataY">The Y value under the pointer.</param>
 public readonly record struct HoverContext(decimal DataX, decimal DataY);
 
+/// <summary>An active (hovered or highlighted) data element: its dataset and its index within it.</summary>
+public readonly record struct ActiveElement(int DatasetIndex, int Index);
+
 /// <summary>Context passed to the legend click callback.</summary>
 /// <param name="LegendIndex">The clicked legend item index.</param>
 /// <param name="LegendText">The clicked legend item text.</param>

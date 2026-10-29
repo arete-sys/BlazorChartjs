@@ -98,6 +98,19 @@ public class Options : IOptions
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Interaction? Interaction { get; set; }
 
+    /// <summary>Size of a doughnut's hole, as pixels (<c>"80"</c>) or a share of the radius (<c>"60%"</c>). Pie and doughnut charts only.</summary>
+    [JsonPropertyName("cutout")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Cutout { get; set; }
+
+    /// <summary>
+    /// Opacity (0–1) of every other element while one is active, hovered or set with
+    /// <see cref="Chart.SetActiveElementsAsync"/>, so the active one stands out. Unset: nothing fades.
+    /// </summary>
+    [JsonPropertyName("bcjsInactiveOpacity")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public decimal? InactiveOpacity { get; set; }
+
     /// <summary>Chart layout (padding around the chart area).</summary>
     [JsonPropertyName("layout")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

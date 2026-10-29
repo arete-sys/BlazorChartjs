@@ -5,7 +5,7 @@
 
 import { Chart } from './lib/chartjs/auto/auto.js';
 import './lib/dateadapter/chartjs-adapter-date-fns.bundle.esm.js'; // registers the date adapter time axes need
-import { getRelativePosition, toPadding } from './lib/chartjs/helpers/helpers.js';
+import { color, getRelativePosition, toPadding } from './lib/chartjs/helpers/helpers.js';
 import ChartDataLabels from './lib/datalabels/chartjs-plugin-datalabels.esm.js';
 import zoomPlugin from './lib/zoom/chartjs-plugin-zoom.esm.js';
 
@@ -470,7 +470,7 @@ function highlightLegendItem(chart, item) {
     }
     if (!active.length && !chart.getActiveElements().length) return;
     chart.setActiveElements(active);
-    chart.render();
+    if (!activeChanged(chart) || !chart.$bcjsFades) chart.render();
 }
 
 function removeHtmlLegend(chart) {
@@ -486,6 +486,60 @@ function resizeSoon(chart) {
     requestAnimationFrame(() => {
         if (chart.canvas && chart.attached) chart.resize();
     });
+}
+
+// Active elements: Chart.js's hovered set, or one set from .NET. This plugin notices a change after each
+// event, fades the other elements when the chart asks for it, and tells .NET about pointer-driven changes.
+const activePlugin = {
+    id: 'bcjsActive',
+    afterEvent(chart, args) {
+        if (!activeChanged(chart)) return;
+        if (!args.replay && chart.$bcjsNotifyActive) {
+            chart.$bcjsDotNet?.invokeMethodAsync('OnActiveChangedCallback', activeElements(chart));
+        }
+    },
+};
+
+function activeElements(chart) {
+    return chart.getActiveElements().map(({ datasetIndex, index }) => ({ datasetIndex, index }));
+}
+
+function activeChanged(chart) {
+    const keys = activeElements(chart).map(a => `${a.datasetIndex}:${a.index}`);
+    const key = keys.join(',');
+    if (key === (chart.$bcjsActiveKey ?? '')) return false;
+    chart.$bcjsActiveKey = key;
+    chart.$bcjsActiveSet = new Set(keys);
+    if (chart.$bcjsFades) chart.update('active');
+    return true;
+}
+
+// Background colours become scriptable so they can be re-resolved faded whenever the active set changes.
+function applyInactiveOpacity(config) {
+    const options = config.options;
+    const alpha = options?.bcjsInactiveOpacity;
+    if (options) delete options.bcjsInactiveOpacity;
+    if (alpha === undefined || alpha === null) return false;
+    for (const dataset of config.data?.datasets ?? []) {
+        const base = dataset.backgroundColor;
+        if (base === undefined || typeof base === 'function') continue;
+        dataset.backgroundColor = (ctx) => {
+            const c = Array.isArray(base) ? base[ctx.dataIndex % base.length] : base;
+            const set = ctx.chart.$bcjsActiveSet;
+            if (!set || set.size === 0) return c;
+            const active = ctx.type === 'data'
+                ? set.has(`${ctx.datasetIndex}:${ctx.dataIndex}`)
+                : [...set].some(k => k.startsWith(`${ctx.datasetIndex}:`));
+            return active ? c : fadeColor(c, alpha);
+        };
+    }
+    return true;
+}
+
+function fadeColor(c, alpha) {
+    if (typeof c !== 'string') return c;
+    const k = color(c);
+    return k.valid ? k.alpha(k.rgb.a * alpha).rgbString() : c;
 }
 
 // Rewires the serialized control flags into live Chart.js callbacks bound to `dotNetRef`.
@@ -678,9 +732,9 @@ const registeredPlugins = new Set();
 function ensurePlugins(config) {
     const options = config.options ?? {};
 
-    // Global but inert: it only acts on charts whose options carry bcjsHtmlLegend.
+    // Global but inert: they act only on charts whose options carry bcjsHtmlLegend, fade or notify.
     if (!registeredPlugins.has('htmlLegend')) {
-        Chart.register(htmlLegendPlugin);
+        Chart.register(htmlLegendPlugin, activePlugin);
         registeredPlugins.add('htmlLegend');
     }
 
@@ -711,7 +765,7 @@ function setCrosshair(chart, canvasId, crosshair) {
     }
 }
 
-function buildChart(canvasId, dotNetRef, config) {
+function buildChart(canvasId, dotNetRef, config, notifyActive) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return null;
 
@@ -719,10 +773,14 @@ function buildChart(canvasId, dotNetRef, config) {
     const dataLabels = usesDataLabels(config);
     if (dataLabels) config.plugins = [ChartDataLabels];
 
+    const fades = applyInactiveOpacity(config);
     wireCallbacks(config, dotNetRef, () => Chart.getChart(canvasId));
 
     const chart = new Chart(canvas.getContext('2d'), config);
     chart.$bcjsDataLabels = dataLabels;
+    chart.$bcjsFades = fades;
+    chart.$bcjsNotifyActive = !!notifyActive;
+    chart.$bcjsDotNet = dotNetRef;
     setCrosshair(chart, canvasId, crosshair);
     return chart;
 }
@@ -751,32 +809,45 @@ function parseConfig(jsonConfig) {
 }
 
 /** Creates a chart on the given canvas from a serialized config string. */
-export async function create(canvasId, dotNetRef, jsonConfig) {
+export async function create(canvasId, dotNetRef, jsonConfig, notifyActive) {
     destroy(canvasId);
     const config = parseConfig(jsonConfig);
     ensurePlugins(config);
-    buildChart(canvasId, dotNetRef, config);
+    buildChart(canvasId, dotNetRef, config, notifyActive);
 }
 
 /** Updates the chart in place; rebuilds only on a type or data-labels change (inline plugins are fixed at construction). */
-export async function update(canvasId, dotNetRef, jsonConfig) {
+export async function update(canvasId, dotNetRef, jsonConfig, notifyActive) {
     const config = parseConfig(jsonConfig);
     ensurePlugins(config);
 
     const chart = Chart.getChart(canvasId);
     if (!chart || chart.config.type !== config.type || chart.$bcjsDataLabels !== usesDataLabels(config)) {
         destroy(canvasId);
-        buildChart(canvasId, dotNetRef, config);
+        buildChart(canvasId, dotNetRef, config, notifyActive);
         return;
     }
 
     const crosshair = takeCrosshair(config);
+    chart.$bcjsFades = applyInactiveOpacity(config);
+    chart.$bcjsNotifyActive = !!notifyActive;
+    chart.$bcjsDotNet = dotNetRef;
     wireCallbacks(config, dotNetRef, () => chart);
     if (!config.options?.plugins?.tooltip?.external) removeHtmlTooltip(chart);
     applyData(chart.data, config.data ?? {});
     chart.options = config.options ?? {};
     setCrosshair(chart, canvasId, crosshair);
     chart.update();
+}
+
+/** Highlights the given elements as if hovered (empty clears); not reported back to .NET. */
+export function setActiveElements(canvasId, elements) {
+    const chart = Chart.getChart(canvasId);
+    if (!chart) return;
+    const meta = (e) => chart.getDatasetMeta(e.datasetIndex);
+    const valid = (elements ?? []).filter(e => e.datasetIndex < chart.data.datasets.length && e.index < meta(e).data.length);
+    chart.setActiveElements(valid.map(e => ({ datasetIndex: e.datasetIndex, index: e.index })));
+    if (!activeChanged(chart) || !chart.$bcjsFades) chart.update('active');
 }
 
 /** Pushes a single label/value pair onto a dataset and redraws. */

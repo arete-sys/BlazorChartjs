@@ -47,6 +47,20 @@ public partial class Chart : IAsyncDisposable
     [Parameter]
     public string? AriaLabel { get; set; }
 
+    /// <summary>
+    /// Content centred over the chart, e.g. a total in a doughnut's hole. It lets the pointer through to the
+    /// chart beneath, so hovering it still hovers the chart.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Raised when the elements under the pointer change, with the elements now active (empty when the
+    /// pointer leaves them). Not raised by <see cref="SetActiveElementsAsync"/>.
+    /// </summary>
+    [Parameter]
+    public EventCallback<ActiveElement[]> OnActiveChanged { get; set; }
+
     /// <summary>Raised when a data element is clicked.</summary>
     [Parameter]
     public EventCallback<CallbackGenericContext> OnChartClick { get; set; }
@@ -84,9 +98,9 @@ public partial class Chart : IAsyncDisposable
 
         var json = ChartConfigSerializer.Serialize(Config);
         if (_renderedConfig is null)
-            await _interop.CreateAsync(Config.CanvasId, _selfRef, json);
+            await _interop.CreateAsync(Config.CanvasId, _selfRef, json, OnActiveChanged.HasDelegate);
         else
-            await _interop.UpdateAsync(Config.CanvasId, _selfRef, json);
+            await _interop.UpdateAsync(Config.CanvasId, _selfRef, json, OnActiveChanged.HasDelegate);
 
         _renderedConfig = Config;
     }
@@ -96,7 +110,7 @@ public partial class Chart : IAsyncDisposable
     {
         if (_interop is null || Config is null || _selfRef is null)
             return;
-        await _interop.UpdateAsync(Config.CanvasId, _selfRef, ChartConfigSerializer.Serialize(Config));
+        await _interop.UpdateAsync(Config.CanvasId, _selfRef, ChartConfigSerializer.Serialize(Config), OnActiveChanged.HasDelegate);
     }
 
     /// <summary>Appends label/value pairs to a dataset and redraws.</summary>
@@ -127,6 +141,18 @@ public partial class Chart : IAsyncDisposable
         if (_interop is null || Config is null)
             return;
         await _interop.ClearDataAsync(Config.CanvasId);
+    }
+
+    /// <summary>
+    /// Highlights these elements as if hovered (hover colours and offset, and <see cref="Options.InactiveOpacity"/>),
+    /// e.g. from a list beside the chart. No elements clears the highlight.
+    /// </summary>
+    /// <param name="elements">The elements to highlight.</param>
+    public async Task SetActiveElementsAsync(params ActiveElement[] elements)
+    {
+        if (_interop is null || Config is null)
+            return;
+        await _interop.SetActiveElementsAsync(Config.CanvasId, elements);
     }
 
     /// <summary>
@@ -171,6 +197,14 @@ public partial class Chart : IAsyncDisposable
             await OnChartOver.InvokeAsync(ctx);
         if (Config?.Options is Options { OnHoverAsync: { } handler })
             await handler(ctx);
+    }
+
+    /// <summary>Invoked by JS when the elements under the pointer change.</summary>
+    [JSInvokable]
+    public async Task OnActiveChangedCallback(ActiveElement[] elements)
+    {
+        if (OnActiveChanged.HasDelegate)
+            await OnActiveChanged.InvokeAsync(elements);
     }
 
     /// <summary>Invoked by JS when a legend item is clicked.</summary>

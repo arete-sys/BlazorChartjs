@@ -78,6 +78,8 @@ builder.Services.AddBcjs();
 | `Height` / `Width` | `string?` | CSS sizing for the container. |
 | `Class` / `Style` | `string?` | Extra class / inline style on the container. |
 | `AriaLabel` | `string?` | Accessible name: the canvas becomes `role="img"` with this label. |
+| `ChildContent` | `RenderFragment?` | Content centred over the chart, e.g. a total in a doughnut's hole; the pointer passes through it. |
+| `OnActiveChanged` | `EventCallback<ActiveElement[]>` | Raised when the elements under the pointer change (empty when it leaves them). |
 | `OnChartClick` | `EventCallback<CallbackGenericContext>` | Raised when a data element is clicked. |
 | `OnChartOver` | `EventCallback<HoverContext>` | Raised when the chart is hovered. |
 | `OnLegendClick` | `EventCallback<LegendClickContext>` | Raised when a legend item is clicked. |
@@ -90,6 +92,7 @@ await chart.AddDatasetAsync(dataset);                 // append a new dataset
 await chart.ClearDataAsync();                          // clear labels + data
 await chart.UpdateAsync();                             // push the current Config to the chart
 var png = await chart.ToBase64ImageAsync(backgroundColor: "#fff"); // "data:image/png;base64,…"
+await chart.SetActiveElementsAsync(new ActiveElement(0, 3));       // highlight a slice/point; none clears
 ```
 
 `ToBase64ImageAsync(type, quality, backgroundColor)` returns the canvas as an image data URL (`null` before
@@ -504,7 +507,32 @@ Chart.js 4 options beyond the basics, each left out of the JSON when unset:
 | `BarDataset` | `BorderRadius`, `MaxBarThickness`, `BarPercentage`, `CategoryPercentage`, `HoverBorderColor` |
 | `LineDataset` | `PointHoverRadius`, `PointHitRadius`, `PointBackgroundColor`, `PointBorderColor`, `BorderDash`, `SpanGaps` |
 | `PieDataset`, `DoughnutDataset` | `BorderColor`, `HoverBackgroundColor`, `HoverBorderColor` |
-| `Options` | `Layout` (`Padding` around the chart area), `Locale` |
+| `Options` | `Layout` (`Padding` around the chart area), `Locale`, `Cutout` (doughnut hole, `"60%"`), `InactiveOpacity` |
+
+## A chart linked to a list
+
+`SetActiveElementsAsync` highlights elements as if hovered, and `OnActiveChanged` reports what the pointer
+hovers, so a list beside the chart can drive it and follow it. `Options.InactiveOpacity` fades every other
+element while one is active, whichever way it became active (the HTML legend's hover included).
+
+```razor
+<Chart @ref="_chart" Config="_config" Height="240px" OnActiveChanged="e => _active = e.Length == 0 ? null : e[0].Index">
+    <strong>201</strong><span>organisations</span>   @* centred in the hole *@
+</Chart>
+
+@foreach (var (label, i) in _labels.Select((l, i) => (l, i)))
+{
+    <li class="@(_active == i ? "on" : null)" @onmouseenter="() => _chart!.SetActiveElementsAsync(new ActiveElement(0, i))"
+        @onmouseleave="() => _chart!.SetActiveElementsAsync()">@label</li>
+}
+
+@code {
+    // Options = new PieOptions { Cutout = "60%", InactiveOpacity = 0.3M, ... }, Type = ChartType.Doughnut
+}
+```
+
+`SetActiveElementsAsync` does not raise `OnActiveChanged`: the caller already knows. The sample's **Doughnut with
+a list** page is the full version.
 
 ## Time axes
 

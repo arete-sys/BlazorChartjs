@@ -107,6 +107,18 @@ public class ChartOptionsSerializationTests
     }
 
     [Fact]
+    public void Cutout_and_inactive_opacity_are_omitted_when_unset_and_serialized_when_set()
+    {
+        var unset = Root(new PieChartConfig { Options = new PieOptions() }).GetProperty("options");
+        Assert.False(unset.TryGetProperty("cutout", out _));
+        Assert.False(unset.TryGetProperty("bcjsInactiveOpacity", out _));
+
+        var set = Root(new PieChartConfig { Options = new PieOptions { Cutout = "60%", InactiveOpacity = 0.3M } }).GetProperty("options");
+        Assert.Equal("60%", set.GetProperty("cutout").GetString());
+        Assert.Equal(0.3M, set.GetProperty("bcjsInactiveOpacity").GetDecimal());
+    }
+
+    [Fact]
     public void Set_axis_dataset_and_layout_options_use_chartjs_names()
     {
         var config = new BarChartConfig

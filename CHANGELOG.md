@@ -6,6 +6,25 @@ All notable changes to BCJS are documented here. This project adheres to
 ## [Unreleased]
 
 ### Added
+- `Chart.SetActiveElementsAsync(params ActiveElement[])`: highlight elements as if hovered (hover colours,
+  offset and the fade below), e.g. from a list beside the chart; none clears it.
+- `Chart.OnActiveChanged` (`EventCallback<ActiveElement[]>`): raised when the elements under the pointer
+  change. Charts without a handler send nothing to .NET.
+- `Options.InactiveOpacity`: while any element is active, every other one is drawn at this opacity. Applies to
+  hovering, `SetActiveElementsAsync` and the HTML legend's hover.
+- `Chart.ChildContent`: content centred over the chart (`div.bcjs-chart-overlay`), e.g. a total in a
+  doughnut's hole; the pointer passes through it.
+- `Options.Cutout`: the doughnut hole, as pixels or a share of the radius (`"60%"`).
+- Sample page: **Doughnut with a list** (a total in the hole, and a list that highlights its slice and the
+  reverse).
+
+### Changed
+- `ChartInterop.CreateAsync` and `UpdateAsync` take an optional `notifyActive` argument (source compatible).
+- The package now depends on `Microsoft.AspNetCore.Components.Web` 10.0.14 (was 10.0.13).
+
+## [1.3.0] — 2026-10-23
+
+### Added
 - `Legend.Html` (`HtmlLegend`: `CssClass`): the legend as an HTML list beside the chart, laid out from
   `Legend.Position`/`Align`/`Reverse` and styled from `Legend.Labels`. Items toggle their series or slice on
   click and on Enter/Space, highlight it on hover, and are `role="button"` with `aria-pressed`. Default

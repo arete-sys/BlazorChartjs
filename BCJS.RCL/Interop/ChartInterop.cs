@@ -31,17 +31,17 @@ public sealed class ChartInterop : IAsyncDisposable
             jsRuntime.InvokeAsync<IJSObjectReference>("import", ModulePath).AsTask());
 
     /// <summary>Creates a chart from a serialized config string.</summary>
-    public async ValueTask CreateAsync(string canvasId, DotNetObjectReference<Chart> dotNetRef, string jsonConfig)
+    public async ValueTask CreateAsync(string canvasId, DotNetObjectReference<Chart> dotNetRef, string jsonConfig, bool notifyActive = false)
     {
         var module = await _module.Value;
-        await module.InvokeVoidAsync("create", canvasId, dotNetRef, jsonConfig);
+        await module.InvokeVoidAsync("create", canvasId, dotNetRef, jsonConfig, notifyActive);
     }
 
     /// <summary>Replaces the chart with one built from a new serialized config string.</summary>
-    public async ValueTask UpdateAsync(string canvasId, DotNetObjectReference<Chart> dotNetRef, string jsonConfig)
+    public async ValueTask UpdateAsync(string canvasId, DotNetObjectReference<Chart> dotNetRef, string jsonConfig, bool notifyActive = false)
     {
         var module = await _module.Value;
-        await module.InvokeVoidAsync("update", canvasId, dotNetRef, jsonConfig);
+        await module.InvokeVoidAsync("update", canvasId, dotNetRef, jsonConfig, notifyActive);
     }
 
     /// <summary>Appends label/value pairs to a dataset.</summary>
@@ -65,6 +65,13 @@ public sealed class ChartInterop : IAsyncDisposable
     {
         var module = await _module.Value;
         await module.InvokeVoidAsync("clearData", canvasId);
+    }
+
+    /// <summary>Highlights the given elements as if hovered; none clears the highlight.</summary>
+    public async ValueTask SetActiveElementsAsync(string canvasId, ActiveElement[] elements)
+    {
+        var module = await _module.Value;
+        await module.InvokeVoidAsync("setActiveElements", canvasId, elements);
     }
 
     /// <summary>Returns the chart as an image data URL, or <see langword="null"/> if it has not been drawn.</summary>
